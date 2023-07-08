@@ -1,0 +1,11 @@
+LOG_LEVEL = "DEBUG"
+
+[Database]
+host = ""
+user = ""
+password = ""
+database = ""
+
+[Flask]
+DEBUG = true
+SECRET_KEY = ""
