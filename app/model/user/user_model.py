@@ -35,6 +35,12 @@ class User:
 
             self.EncryptedPassword = enc
 
+    def ComparePassword(self, password):
+        return bcrypt.checkpw(password, self.EncryptedPassword)
+
+    def GetClientData(self):
+        return {"ID": self.ID}
+
     def _encryptString(self, s: str) -> (str, Exception):
         try:
             b = bcrypt.hashpw(s, bcrypt.gensalt(12))

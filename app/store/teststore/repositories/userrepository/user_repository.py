@@ -4,13 +4,16 @@ from app.model import User
 import app.store as store
 
 from app.store.errors import *
+from app.store.store import Store
+
+Users = Dict[int, User]
 
 
 class UserRepository(store.UserRepository):
-    store = None
-    users: Dict[str, User]
+    store: Store
+    users: Users
 
-    def __init__(self, store, users: Dict[str, User]):
+    def __init__(self, store: Store, users: Users):
         self.store = store
         self.users = users
 
@@ -21,11 +24,13 @@ class UserRepository(store.UserRepository):
         err = u.BeforeCreate()
         if err is not None:
             return err
-        self.users[u.Email] = u
-        u.ID = len(self.users)
+
+        u.ID = len(self.users) + 1
+        self.users[u.ID] = u
 
     def FindByEmail(self, email: str) -> (User, ErrRecordNotFound):
-        if email not in self.users:
-            return None, ErrRecordNotFound
+        for u in self.users.values():
+            if u.Email == email:
+                return u, None
 
-        return self.users[email], None
+        return None, ErrRecordNotFound

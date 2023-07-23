@@ -1,17 +1,19 @@
 import mysql.connector
+from mysql.connector import pooling
 
 
 def TestDB(database_config) -> (mysql.connector.MySQLConnection, lambda *tables: None):
     print(database_config)
-    db = mysql.connector.connect(**database_config)
+    db = pooling.MySQLConnectionPool(pool_name="app", pool_size=1, **database_config)
     print('connected to database')
 
     def teardown(*tables):
         if len(tables) > 0:
-            cursor = db.cursor()
-            cursor.execute(f"TRUNCATE {', '.join(tables)}")
-            db.commit()
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(f"DELETE FROM {', '.join(tables)}")
+            conn.commit()
             cursor.close()
-            db.close()
+            conn.close()
 
     return db, teardown

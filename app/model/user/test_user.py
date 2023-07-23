@@ -1,6 +1,6 @@
 import unittest
 
-from . import TestUser
+from app.model import TestUser
 
 
 class UserTest(unittest.TestCase):

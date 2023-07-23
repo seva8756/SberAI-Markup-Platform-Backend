@@ -1,12 +1,16 @@
+import mysql.connector
+from mysql.connector import errorcode
+
 from app.model import User
 import app.store as store
-from app.store.errors import ErrRecordNotFound
+from app.store.errors import ErrRecordNotFound, ErrRecordAlreadyExist
+from app.store.store import Store
 
 
 class UserRepository(store.UserRepository):
-    store = None
+    store: Store
 
-    def __init__(self, store):
+    def __init__(self, store: Store):
         self.store = store
 
     def Create(self, u: User) -> Exception:
@@ -17,20 +21,19 @@ class UserRepository(store.UserRepository):
         if err is not None:
             return err
 
-        _, err = self.store.query("INSERT INTO users (email, encrypted_password) VALUES (%s, %s)",
-                                  u.Email,
-                                  u.EncryptedPassword)
+        _, err, info = self.store.query("INSERT INTO users (email, encrypted_password) VALUES (%s, %s)",
+                                        u.Email,
+                                        u.EncryptedPassword)
         if err is not None:
+            if err.errno == errorcode.ER_DUP_ENTRY:
+                return ErrRecordAlreadyExist
             return err
-        res, err = self.store.query("SELECT id FROM users WHERE email = %s",
-                                    u.Email)
-        if err is not None:
-            return err
-        u.ID = res[0]
+
+        u.ID = info.last_row_id
 
     def FindByEmail(self, email: str) -> (User, Exception):
-        res, err = self.store.query("SELECT * FROM users WHERE email = %s",
-                                    email)
+        res, err, _ = self.store.query("SELECT * FROM users WHERE email = %s",
+                                       email)
         if err is not None:
             return None, err
         if len(res) == 0:

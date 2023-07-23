@@ -1,14 +1,16 @@
-import toml
+from datetime import timedelta
 
 
 class FlaskConfig:
     DEBUG = False
     CSRF_ENABLED = True  # Включение защиты против "Cross-site Request Forgery (CSRF)"
-    SECRET_KEY = ""  # Случайный ключ, которые будет исползоваться для подписи данных, например cookies.
+    JWT_SECRET_KEY = ""  # Случайный ключ, для подписи JWT
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
-    def __init__(self, settings: object):
+    def __init__(self, settings: dict[str, str]):
         self.DEBUG = settings['DEBUG']
-        self.SECRET_KEY = settings['SECRET_KEY']
+        self.JWT_SECRET_KEY = settings['JWT_SECRET_KEY']
 
 
 class Config(object):
@@ -16,9 +18,7 @@ class Config(object):
     Database: object = None
     Flask: FlaskConfig = None
 
-    def __init__(self, config_path='configs/apiserver.toml'):
-        config = toml.load(config_path)
-
+    def __init__(self, config: dict[str, str]):
         self.Flask = FlaskConfig(config['Flask'])
         self.Database = config['Database']
         self.Log_Level = config['LOG_LEVEL']

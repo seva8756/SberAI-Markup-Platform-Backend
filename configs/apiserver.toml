@@ -1,11 +1,11 @@
 LOG_LEVEL = "DEBUG"
 
 [Database]
-host = ""
+host = "localhost"
 user = ""
 password = ""
 database = ""
 
 [Flask]
 DEBUG = true
-SECRET_KEY = ""
+JWT_SECRET_KEY = ""

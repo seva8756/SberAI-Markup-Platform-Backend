@@ -1,7 +1,7 @@
 import unittest
-from . import TestStore
+from app.store.teststore import TestStore
 from app.model import TestUser
-from .userrepository import *
+from app.store.teststore.repositories.userrepository.user_repository import *
 
 
 class UserRepositoryTest(unittest.TestCase):

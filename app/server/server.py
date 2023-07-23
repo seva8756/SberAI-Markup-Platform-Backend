@@ -1,26 +1,53 @@
-from flask import Flask
+import http
+import json
+
+import flask
+from flask import (
+    Flask,
+    jsonify,
+    make_response,
+    current_app
+)
+from flask_jwt_extended import JWTManager
 
 from app.store.store import Store
 from app.config import Config
 
 
 class Server:
-    flask: Flask
-    store: Store
+    _flask: Flask
+    _store: Store
 
-    def __init__(self, store: Store, config: Config.Flask = None):
+    def __init__(self, store: Store, config: Config.Flask):
         app = Flask(__name__)
         app.config.from_object(config)
+        JWTManager(app)
 
         self.flask = app
         self.store = store
 
-        self.configure_router(app)
+        app.config["current_server"] = self
 
-    def configure_router(self, app):
-        @app.route('/users', methods=['POST'])
-        def users():
-            # print(app.store.User().create())
-            return "Hello world@"
+        self._configure_router()
 
-        pass
+    def _configure_router(self):
+        from app.router import router
+        router.register_blueprints(self)
+
+    @staticmethod
+    def error(code: int, error):
+        if isinstance(error, Exception):
+            error = str(error)
+        return Server.respond(code, {"error": error})
+
+    @staticmethod
+    def respond(code: int, data=None):
+        return make_response(jsonify(data), code)
+
+    @staticmethod
+    def store() -> Store:
+        return current_app.config["current_server"].store
+
+    @staticmethod
+    def flask() -> Store:
+        return current_app.config["current_server"].flask
