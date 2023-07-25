@@ -30,7 +30,15 @@ class UserRepository(store.UserRepository):
 
     def FindByEmail(self, email: str) -> (User, ErrRecordNotFound):
         for u in self.users.values():
-            if u.Email == email:
+            if u.email == email:
                 return u, None
+
+        return None, ErrRecordNotFound
+
+    def Find(self, id: int) -> (User, ErrRecordNotFound):
+        for u in self.users.values():
+            if hasattr(u, "ID"):
+                if u.ID == id:
+                    return u, None
 
         return None, ErrRecordNotFound

@@ -13,10 +13,21 @@ class UserRepositoryTest(unittest.TestCase):
     def test_FindByEmail(self):
         s = TestStore()
         u1 = TestUser()
-        _, err = s.User().FindByEmail(u1.Email)
+        _, err = s.User().FindByEmail(u1.email)
         self.assertEqual(err, ErrRecordNotFound)
 
         s.User().Create(u1)
-        u2, err = s.User().FindByEmail(u1.Email)
+        u2, err = s.User().FindByEmail(u1.email)
+        self.assertIsNone(err)
+        self.assertIsNotNone(u2)
+
+    def test_Find(self):
+        s = TestStore()
+        u1 = TestUser()
+        _, err = s.User().Find(1)
+        self.assertEqual(err, ErrRecordNotFound)
+
+        s.User().Create(u1)
+        u2, err = s.User().Find(u1.ID)
         self.assertIsNone(err)
         self.assertIsNotNone(u2)

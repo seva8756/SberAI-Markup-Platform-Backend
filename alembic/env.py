@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 
+import toml
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -11,6 +12,11 @@ config = context.config
 
 config.set_main_option("script_location", "alembic")
 config.set_main_option("revision_template", "sql")
+
+config_toml = toml.load('configs/apiserver.toml')
+configdb = config_toml[config_toml["Alembic"]["database"]]
+config.set_main_option("sqlalchemy.url",
+                       f"mysql+mysqlconnector://{configdb['user']}:{configdb['password']}@{configdb['host']}/{configdb['database']}")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

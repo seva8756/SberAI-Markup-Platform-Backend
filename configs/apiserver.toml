@@ -1,10 +1,20 @@
 LOG_LEVEL = "DEBUG"
 
 [Database]
-host = "localhost"
+host = ""
 user = ""
 password = ""
-database = ""
+database = "markup-platform"
+
+[TestDatabase]
+host = ""
+user = ""
+password = ""
+database = "markup-platform-test"
+
+# Current database for migrations.
+[Alembic]
+database = "TestDatabase"
 
 [Flask]
 DEBUG = true

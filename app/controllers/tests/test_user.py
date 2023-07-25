@@ -1,7 +1,9 @@
 import http
 import unittest
 
-from app.controllers.tests.testing import TestConfig
+from flask_jwt_extended import create_access_token
+
+from app.controllers.tests.testing import TestConfig, GetAuthorizationHeader
 from app.model import TestUser
 from app.model.testing import TestToken
 from app.server import Server
@@ -18,7 +20,8 @@ class UserControllerTest(unittest.TestCase):
         testCases = (
             {
                 "name": "valid",
-                "payload": {"email": u.Email, "password": u.Password},
+                "payload": {"email": u.email, "password": u.password, "firstName": u.first_name,
+                            "lastName": u.last_name},
                 "expectedCode": http.HTTPStatus.CREATED
             },
             {
@@ -28,7 +31,7 @@ class UserControllerTest(unittest.TestCase):
             },
             {
                 "name": "invalid params",
-                "payload": {"email": "invalid", "password": "short"},
+                "payload": {"email": "invalid", "password": "short", "firstName": "", "lastName": ""},
                 "expectedCode": http.HTTPStatus.UNPROCESSABLE_ENTITY
             },
         )
@@ -47,7 +50,7 @@ class UserControllerTest(unittest.TestCase):
         testCases = (
             {
                 "name": "valid",
-                "payload": {"email": u.Email, "password": u.Password},
+                "payload": {"email": u.email, "password": u.password},
                 "expectedCode": http.HTTPStatus.OK
             },
             {
@@ -62,7 +65,7 @@ class UserControllerTest(unittest.TestCase):
             },
             {
                 "name": "invalid auth password",
-                "payload": {"email": u.Email, "password": "short"},
+                "payload": {"email": u.email, "password": "short"},
                 "expectedCode": http.HTTPStatus.UNAUTHORIZED
             },
         )
@@ -101,8 +104,40 @@ class UserControllerTest(unittest.TestCase):
 
         for val in testCases:
             with self.subTest(val["name"]):
-                response = s.test_client().post('/users/refresh',
-                                                headers={'Authorization': 'Bearer ' + val["token"]})
+                response = s.test_client().post('/users/refresh', headers=GetAuthorizationHeader(val["token"]))
+                self.assertEqual(response.status_code, val["expectedCode"])
+
+    def test_HandleUsersGetInfoPersonal(self):
+        store = TestStore()
+        s = Server(store, TestConfig()).flask
+
+        u = TestUser()
+        store.User().Create(u)
+        with s.app_context():
+            access_token = create_access_token(identity=u.ID)
+            access_token_not_found = create_access_token(identity=123)
+
+        testCases = (
+            {
+                "name": "valid",
+                "token": access_token,
+                "expectedCode": http.HTTPStatus.OK
+            },
+            {
+                "name": "not found",
+                "token": access_token_not_found,
+                "expectedCode": http.HTTPStatus.NOT_FOUND
+            },
+            {
+                "name": "invalid",
+                "token": "invalid",
+                "expectedCode": http.HTTPStatus.UNPROCESSABLE_ENTITY
+            }
+        )
+
+        for val in testCases:
+            with self.subTest(val["name"]):
+                response = s.test_client().get('/users/info/personal', headers=GetAuthorizationHeader(val["token"]))
                 self.assertEqual(response.status_code, val["expectedCode"])
 
 

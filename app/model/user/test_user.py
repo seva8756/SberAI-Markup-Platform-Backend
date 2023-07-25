@@ -10,28 +10,38 @@ class UserTest(unittest.TestCase):
 
         def with_encrypted_password():
             u = TestUser()
-            u.Password = ""
-            u.EncryptedPassword = "encryptedpassword"
+            u.password = ""
+            u.encrypted_password = "encryptedpassword"
             return u
 
         def empty_email():
             u = TestUser()
-            u.Email = ""
+            u.email = ""
             return u
 
         def invalid_email():
             u = TestUser()
-            u.Email = "invalid"
+            u.email = "invalid"
             return u
 
         def empty_password():
             u = TestUser()
-            u.Password = ""
+            u.password = ""
             return u
 
         def short_password():
             u = TestUser()
-            u.Password = "short"
+            u.password = "short"
+            return u
+
+        def empty_firstname():
+            u = TestUser()
+            u.first_name = ""
+            return u
+
+        def empty_lastname():
+            u = TestUser()
+            u.last_name = ""
             return u
 
         testCases = (
@@ -65,6 +75,16 @@ class UserTest(unittest.TestCase):
                 "u": short_password,
                 "isValid": False
             },
+            {
+                "name": "empty firstname",
+                "u": empty_firstname,
+                "isValid": False
+            },
+            {
+                "name": "empty lastname",
+                "u": empty_lastname,
+                "isValid": False
+            },
         )
 
         for val in testCases:
@@ -78,7 +98,7 @@ class UserTest(unittest.TestCase):
     def test_BeforeCreate(self):
         u = TestUser()
         self.assertIsNone(u.BeforeCreate())
-        self.assertNotEqual(u.EncryptedPassword, "")
+        self.assertNotEqual(u.encrypted_password, "")
 
 
 if __name__ == '__main__':

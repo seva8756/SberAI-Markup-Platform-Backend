@@ -18,7 +18,7 @@ class Server:
     _flask: Flask
     _store: Store
 
-    def __init__(self, store: Store, config: Config.Flask):
+    def __init__(self, store: Store, config: Config.flask):
         app = Flask(__name__)
         app.config.from_object(config)
         JWTManager(app)

@@ -11,3 +11,7 @@ class UserRepository:
     @abstractmethod
     def FindByEmail(self, string: str) -> (User, Exception):
         pass
+
+    @abstractmethod
+    def Find(self, id: int) -> (User, Exception):
+        pass

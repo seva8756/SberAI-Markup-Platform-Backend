@@ -21,9 +21,12 @@ class UserRepository(store.UserRepository):
         if err is not None:
             return err
 
-        _, err, info = self.store.query("INSERT INTO users (email, encrypted_password) VALUES (%s, %s)",
-                                        u.Email,
-                                        u.EncryptedPassword)
+        _, err, info = self.store.query(
+            "INSERT INTO users (email, encrypted_password, firstName, lastName) VALUES (%s, %s, %s, %s)",
+            u.email,
+            u.encrypted_password,
+            u.first_name,
+            u.last_name)
         if err is not None:
             if err.errno == errorcode.ER_DUP_ENTRY:
                 return ErrRecordAlreadyExist
@@ -41,6 +44,26 @@ class UserRepository(store.UserRepository):
 
         u = User()
         u.ID = res[0][0]
-        u.Email = res[0][1]
-        u.EncryptedPassword = res[0][2]
+        u.email = res[0][1]
+        u.first_name = res[0][2]
+        u.last_name = res[0][3]
+        u.encrypted_password = res[0][4]
+        u.is_admin = bool(res[0][5])
+        return u, None
+
+    def Find(self, id: int) -> (User, Exception):
+        res, err, _ = self.store.query("SELECT * FROM users WHERE ID = %s",
+                                       id)
+        if err is not None:
+            return None, err
+        if len(res) == 0:
+            return None, ErrRecordNotFound
+
+        u = User()
+        u.ID = res[0][0]
+        u.email = res[0][1]
+        u.first_name = res[0][2]
+        u.last_name = res[0][3]
+        u.encrypted_password = res[0][4]
+        u.is_admin = bool(res[0][5])
         return u, None

@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.decorators.validate_json import validate_json
 from app.server.server import Server
 from ..service.user_service import UserService
-from ..store.errors import ErrRecordAlreadyExist
+from ..store.errors import ErrRecordAlreadyExist, ErrRecordNotFound
 
 module = Blueprint('users', __name__, url_prefix="/users")
 
@@ -16,10 +16,12 @@ module = Blueprint('users', __name__, url_prefix="/users")
 def users_create():
     email = request.json.get('email')
     password = request.json.get('password')
-    if email is None or password is None:
+    fist_name = request.json.get('firstName')
+    last_name = request.json.get('lastName')
+    if email is None or password is None or fist_name is None or last_name is None:
         return Server.error(http.HTTPStatus.BAD_REQUEST, 'Invalid JSON data')
 
-    data, err = UserService.register(email, password)
+    data, err = UserService.register(email, password, fist_name, last_name)
 
     if err is not None:
         if err == ErrRecordAlreadyExist:
@@ -64,3 +66,16 @@ def users_logout():
         return Server.error(http.HTTPStatus.UNAUTHORIZED, "Logout denied")
 
     return Server.respond(http.HTTPStatus.OK, "Logout success")
+
+
+@module.route('/info/personal', methods=['GET'])
+@jwt_required()
+def users_get_info_personal():
+    user_id = get_jwt_identity()
+    data, err = UserService.get_user_info(user_id)
+    if err is not None:
+        if err == ErrRecordNotFound:
+            return Server.error(http.HTTPStatus.NOT_FOUND, "User with this id was not found")
+        return Server.error(http.HTTPStatus.BAD_REQUEST, "Get info interrupted")
+
+    return Server.respond(http.HTTPStatus.OK, data)

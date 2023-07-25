@@ -1,7 +1,7 @@
 from app import Config
 
 
-def TestConfig() -> Config:
+def TestConfig() -> Config.flask:
     c = Config({
         "LOG_LEVEL": "DEBUG",
         "Database": {},
@@ -9,5 +9,9 @@ def TestConfig() -> Config:
             "DEBUG": True,
             "JWT_SECRET_KEY": "e77a7f4d56fcn76d38075b60061621be1c2d9a81e77a7f"
         }
-    }).Flask
+    }).flask
     return c
+
+
+def GetAuthorizationHeader(token) -> dict[str, str]:
+    return {'Authorization': 'Bearer ' + token}

@@ -14,11 +14,11 @@ class FlaskConfig:
 
 
 class Config(object):
-    Log_Level: str = "DEBUG"
-    Database: object = None
-    Flask: FlaskConfig = None
+    log_level: str = "DEBUG"
+    database: object = None
+    flask: FlaskConfig = None
 
     def __init__(self, config: dict[str, str]):
-        self.Flask = FlaskConfig(config['Flask'])
-        self.Database = config['Database']
-        self.Log_Level = config['LOG_LEVEL']
+        self.flask = FlaskConfig(config['Flask'])
+        self.database = config['Database']
+        self.log_level = config['LOG_LEVEL']

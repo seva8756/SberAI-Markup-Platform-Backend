@@ -1,25 +1,11 @@
-import unittest
+import os
 
-database_config: dict = {
-    "host": "localhost",
-    "user": "root",
-    "password": "root",
-    "database": "markup-platform-test"
-}
+import toml
 
-
-class MainTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pass
-        # global database_config
-        # database_config = {
-        #     "host": "localhost",
-        #     "user": "root",
-        #     "password": "root",
-        #     "database": "markup-platform-test"
-        # }
+config = \
+    toml.load(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) + '/configs/apiserver.toml')[
+        "TestDatabase"]
 
 
-if __name__ == '__main__':
-    unittest.main()
+def get_test_database_config():
+    return config
