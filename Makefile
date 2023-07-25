@@ -5,6 +5,9 @@ help:
 	@echo "install - install all dependencies;"
 	@echo "run - run server;"
 	@echo "test - run all tests;"
+	@echo "create_migration - create new database migration;"
+	@echo "upgrade_db - apply all migrations to the latest version;"
+	@echo "downgrade_db - roll back all migrations to the original version;"
 
 install:
 	$(VENV_ACTIVATE) && pip install -r requirements/base.txt
