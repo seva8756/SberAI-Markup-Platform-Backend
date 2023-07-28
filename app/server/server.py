@@ -8,6 +8,7 @@ from flask import (
     make_response,
     current_app
 )
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from app.store.store import Store
@@ -22,6 +23,7 @@ class Server:
         app = Flask(__name__)
         app.config.from_object(config)
         JWTManager(app)
+        CORS(app)  # CORS(app, resources={"*": {"origins": ""}})
 
         self.flask = app
         self.store = store
