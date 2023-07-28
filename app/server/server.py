@@ -23,7 +23,7 @@ class Server:
         app = Flask(__name__)
         app.config.from_object(config)
         JWTManager(app)
-        CORS(app)  # CORS(app, resources={"*": {"origins": ""}})
+        CORS(app, supports_credentials=True)  # CORS(app, resources={"*": {"origins": ""}}, supports_credentials=True)
 
         self.flask = app
         self.store = store
@@ -34,7 +34,7 @@ class Server:
 
     def _configure_router(self):
         from app.router import router
-        router.register_blueprints(self)
+        router.register_routes(self)
 
     @staticmethod
     def error(code: int, error):
