@@ -11,7 +11,3 @@ def TestConfig() -> Config.flask:
         }
     }).flask
     return c
-
-
-def GetAuthorizationHeader(token) -> dict[str, str]:
-    return {'Authorization': 'Bearer ' + token}

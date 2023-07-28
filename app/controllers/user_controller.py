@@ -1,6 +1,6 @@
 import http
 
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.decorators.validate_json import validate_json
@@ -9,6 +9,13 @@ from ..service.user_service import UserService
 from ..store.errors import ErrRecordAlreadyExist, ErrRecordNotFound
 
 module = Blueprint('users', __name__, url_prefix="/users")
+
+
+def set_auth_cookie(response, data):
+    expiration_delta_access = int(current_app.config["JWT_ACCESS_TOKEN_EXPIRES"].total_seconds())
+    expiration_delta_refresh = int(current_app.config["JWT_REFRESH_TOKEN_EXPIRES"].total_seconds())
+    response.set_cookie('refresh_token', data["refresh_token"], httponly=True, max_age=expiration_delta_refresh)
+    response.set_cookie('access_token', data["access_token"], httponly=True, max_age=expiration_delta_access)
 
 
 @module.route('/create', methods=['POST'])
@@ -28,7 +35,9 @@ def users_create():
             return Server.error(http.HTTPStatus.CONFLICT, 'Email already exists')
         return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, err)
 
-    return Server.respond(http.HTTPStatus.CREATED, data)
+    response = Server.respond(http.HTTPStatus.CREATED, data["user_data"])
+    set_auth_cookie(response, data)
+    return response
 
 
 @module.route('/login', methods=['POST'])
@@ -42,30 +51,38 @@ def users_sessions():
     data, err = UserService.login(email, password)
     if err is not None:
         return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
-    return Server.respond(http.HTTPStatus.OK, data)
+
+    response = Server.respond(http.HTTPStatus.OK, data["user_data"])
+    set_auth_cookie(response, data)
+    return response
 
 
 @module.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def users_refresh():
-    refresh_token = request.headers.get('Authorization').split(' ')[1]
+    refresh_token = request.cookies.get('refresh_token')
 
     data, err = UserService.refresh(refresh_token)
     if err is not None:
         return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
 
-    return Server.respond(http.HTTPStatus.OK, data)
+    response = Server.respond(http.HTTPStatus.OK, "Refresh successful")
+    set_auth_cookie(response, data)
+    return response
 
 
 @module.route('/logout', methods=['POST'])
 @jwt_required(refresh=True)
 def users_logout():
-    refresh_token = request.headers.get('Authorization').split(' ')[1]
+    refresh_token = request.cookies.get('refresh_token')
     err = UserService.logout(refresh_token)
     if err is not None:
         return Server.error(http.HTTPStatus.UNAUTHORIZED, "Logout denied")
 
-    return Server.respond(http.HTTPStatus.OK, "Logout success")
+    response = Server.respond(http.HTTPStatus.OK, "Logout successful")
+    response.delete_cookie('refresh_token')
+    response.delete_cookie('access_token')
+    return response
 
 
 @module.route('/info/personal', methods=['GET'])

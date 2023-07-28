@@ -42,7 +42,7 @@ class UserService:
         if err is not None:
             return None, err
 
-        return UserService.login(email, password), None
+        return data, None
 
     @staticmethod
     def refresh(refresh_token: str) -> (Dict[str, str], Exception):

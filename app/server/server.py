@@ -6,7 +6,7 @@ from flask import (
     Flask,
     jsonify,
     make_response,
-    current_app
+    current_app, Response
 )
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -37,13 +37,13 @@ class Server:
         router.register_routes(self)
 
     @staticmethod
-    def error(code: int, error):
+    def error(code: int, error) -> Response:
         if isinstance(error, Exception):
             error = str(error)
         return Server.respond(code, {"error": error})
 
     @staticmethod
-    def respond(code: int, data=None):
+    def respond(code: int, data=None) -> Response:
         return make_response(jsonify(data), code)
 
     @staticmethod

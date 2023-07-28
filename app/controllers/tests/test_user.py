@@ -3,7 +3,7 @@ import unittest
 
 from flask_jwt_extended import create_access_token
 
-from app.controllers.tests.testing import TestConfig, GetAuthorizationHeader
+from app.controllers.tests.testing import TestConfig
 from app.model import TestUser
 from app.model.testing import TestToken
 from app.server import Server
@@ -104,7 +104,9 @@ class UserControllerTest(unittest.TestCase):
 
         for val in testCases:
             with self.subTest(val["name"]):
-                response = s.test_client().post('/users/refresh', headers=GetAuthorizationHeader(val["token"]))
+                client = s.test_client()
+                client.set_cookie('refresh_token', val["token"])
+                response = client.post('/users/refresh')
                 self.assertEqual(response.status_code, val["expectedCode"])
 
     def test_HandleUsersGetInfoPersonal(self):
@@ -137,7 +139,9 @@ class UserControllerTest(unittest.TestCase):
 
         for val in testCases:
             with self.subTest(val["name"]):
-                response = s.test_client().get('/users/info/personal', headers=GetAuthorizationHeader(val["token"]))
+                client = s.test_client()
+                client.set_cookie('access_token', val["token"])
+                response = client.get('/users/info/personal')
                 self.assertEqual(response.status_code, val["expectedCode"])
 
 

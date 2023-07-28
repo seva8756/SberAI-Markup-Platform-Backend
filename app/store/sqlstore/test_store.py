@@ -3,7 +3,7 @@ import os
 import toml
 
 config = \
-    toml.load(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) + '/configs/apiserver.toml')[
+    toml.load(os.getcwd() + '/configs/apiserver.toml')[
         "TestDatabase"]
 
 
