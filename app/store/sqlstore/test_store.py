@@ -2,8 +2,10 @@ import os
 
 import toml
 
+from app.utils import utils
+
 config = \
-    toml.load(os.getcwd() + '/configs/apiserver.toml')[
+    toml.load(utils.get_project_root() + '/configs/apiserver.toml')[
         "TestDatabase"]
 
 

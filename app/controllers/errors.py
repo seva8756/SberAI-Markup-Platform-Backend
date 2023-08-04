@@ -1,2 +1,13 @@
+errUserNotFound = Exception("User not found")
+errUserAlreadyRegistered = Exception("User already registered")
 errIncorrectEmailOrPassword = Exception("Incorrect email or password")
 errNotAuthenticated = Exception("Not authenticated")
+errSessionNotFound = Exception("Session Not Found")
+
+errAnswerOptionDoesNotExist = Exception("Answer option does not exist")
+errTaskNotReservedForUser = Exception("Task is not reserved for user")
+errTaskNotFound = Exception("Task not found")
+errProjectNotFound = Exception("Project not found")
+errAlreadyInProject = Exception("Already in the project")
+errNoAccessToTheProject = Exception("No access to the project")
+errWrongPassword = Exception("Wrong password")

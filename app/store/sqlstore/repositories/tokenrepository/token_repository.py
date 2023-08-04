@@ -29,7 +29,7 @@ class TokenRepository(store.TokenRepository):
 
     def FindByRefresh(self, refresh: str) -> (Token, Exception):
         res, err, _ = self.store.query(
-            "SELECT id, user, refresh_token FROM sessions WHERE refresh_token = %s AND reseted = 0",
+            "SELECT ID, user, refresh_token FROM sessions WHERE refresh_token = %s AND reseted = 0",
             refresh)
         if err is not None:
             return err

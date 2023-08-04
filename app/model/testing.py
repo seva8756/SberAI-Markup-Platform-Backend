@@ -1,3 +1,4 @@
+from app.model.project.project_model import Project
 from app.model.token.token_model import Token
 from app.model.user.user_model import User
 from app.service.token_service import TokenService
@@ -20,3 +21,9 @@ def TestToken(user=123, refresh_token="refresh_token", generate_valid=False) -> 
     else:
         t.refresh_token = TokenService.generate_tokens(user)["refresh_token"]
     return t
+
+
+def TestProject(directory="test_project") -> Project:
+    p = Project()
+    p.directory = directory
+    return p

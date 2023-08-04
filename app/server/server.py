@@ -1,7 +1,3 @@
-import http
-import json
-
-import flask
 from flask import (
     Flask,
     jsonify,
@@ -11,13 +7,15 @@ from flask import (
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
+from app.file_store import FileStore
 from app.store.store import Store
 from app.config import Config
 
 
 class Server:
-    _flask: Flask
-    _store: Store
+    flask: Flask
+    store: Store
+    file_store_: FileStore = FileStore()
 
     def __init__(self, store: Store, config: Config.flask):
         app = Flask(__name__)
@@ -31,10 +29,15 @@ class Server:
         app.config["current_server"] = self
 
         self._configure_router()
+        self._configure_interval()
 
     def _configure_router(self):
         from app.router import router
-        router.register_routes(self)
+        router.register_routes(self.flask)
+
+    def _configure_interval(self):
+        from app.interval import interval
+        interval.register_interval(self)
 
     @staticmethod
     def error(code: int, error) -> Response:
@@ -49,6 +52,10 @@ class Server:
     @staticmethod
     def store() -> Store:
         return current_app.config["current_server"].store
+
+    @staticmethod
+    def file_store() -> FileStore:
+        return current_app.config["current_server"].file_store_
 
     @staticmethod
     def flask() -> Store:

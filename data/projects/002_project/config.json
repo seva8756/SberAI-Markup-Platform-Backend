@@ -1,0 +1,16 @@
+{
+  "title": "Интересный проект",
+  "description": "Рассказываю про очень интересный проект",
+  "question_title": "Что изображено на картинке?",
+  "question_fields": [
+    "image_name"
+  ],
+  "answer_type": "choice",
+  "answer_choice": {
+    "0": "Да",
+    "1": "Нет",
+    "2": "Не знаю"
+  },
+  "repeated_tasks": 3,
+  "password": "123123"
+}

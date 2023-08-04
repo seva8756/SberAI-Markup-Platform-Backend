@@ -12,7 +12,8 @@ def TestDB(database_config=get_test_database_config()) -> (mysql.connector.MySQL
         if len(tables) > 0:
             conn = db.get_connection()
             cursor = conn.cursor()
-            cursor.execute(f"DELETE FROM {', '.join(tables)}")
+            for table in tables:
+                cursor.execute(f"DELETE FROM {table}")
             conn.commit()
             cursor.close()
             conn.close()

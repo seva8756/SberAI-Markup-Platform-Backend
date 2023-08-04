@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import pooling
 
 import app.store.store as store
+from app.store.sqlstore.repositories.projectrepository.project_repository import ProjectRepository
 from app.store.sqlstore.repositories.userrepository.user_repository import UserRepository
 from app.store.sqlstore.repositories.tokenrepository.token_repository import TokenRepository
 
@@ -19,6 +20,7 @@ class Store(store.Store):
     connection_pool: mysql.connector.pooling.MySQLConnectionPool
     user_repository: UserRepository = None
     token_repository: TokenRepository = None
+    project_repository: ProjectRepository = None
 
     def __init__(self, connection_pool: mysql.connector.pooling.MySQLConnectionPool):
         self.connection_pool = connection_pool
@@ -54,3 +56,10 @@ class Store(store.Store):
 
         self.token_repository = TokenRepository(self)
         return self.token_repository
+
+    def Project(self) -> ProjectRepository:
+        if self.project_repository is not None:
+            return self.project_repository
+
+        self.project_repository = ProjectRepository(self)
+        return self.project_repository

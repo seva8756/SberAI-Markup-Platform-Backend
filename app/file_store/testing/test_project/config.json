@@ -1,0 +1,11 @@
+{
+  "title": "Интересный проект",
+  "description": "Рассказываю про очень интересный проект",
+  "question_title": "Что изображено на картинке?",
+  "question_fields": [
+    "image_name"
+  ],
+  "answer_type": "text",
+  "repeated_tasks": 3,
+  "password": "test"
+}

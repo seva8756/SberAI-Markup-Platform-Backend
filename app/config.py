@@ -6,6 +6,7 @@ class FlaskConfig:
     CSRF_ENABLED = True  # Включение защиты против "Cross-site Request Forgery (CSRF)"
 
     JWT_COOKIE_CSRF_PROTECT = False
+    JWT_ERROR_MESSAGE_KEY = "error"
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_COOKIE_NAME = 'access_token'
     JWT_REFRESH_COOKIE_NAME = 'refresh_token'
