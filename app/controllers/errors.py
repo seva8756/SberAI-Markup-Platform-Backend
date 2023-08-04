@@ -1,13 +1,20 @@
-errUserNotFound = Exception("User not found")
-errUserAlreadyRegistered = Exception("User already registered")
-errIncorrectEmailOrPassword = Exception("Incorrect email or password")
-errNotAuthenticated = Exception("Not authenticated")
-errSessionNotFound = Exception("Session Not Found")
+from app.errors import ServerException
 
-errAnswerOptionDoesNotExist = Exception("Answer option does not exist")
-errTaskNotReservedForUser = Exception("Task is not reserved for user")
-errTaskNotFound = Exception("Task not found")
-errProjectNotFound = Exception("Project not found")
-errAlreadyInProject = Exception("Already in the project")
-errNoAccessToTheProject = Exception("No access to the project")
-errWrongPassword = Exception("Wrong password")
+errProcessing = ServerException("errProcessing", "Processing error")
+
+errInvalidJsonData = ServerException("errInvalidJsonData", "Invalid JSON data")
+errInvalidJsonFormat = ServerException("errInvalidJsonFormat", "Invalid JSON format")
+
+errUserNotFound = ServerException("errUserNotFound", "User not found")
+errUserAlreadyRegistered = ServerException("errUserAlreadyRegistered", "User already registered")
+errIncorrectEmailOrPassword = ServerException("errIncorrectEmailOrPassword", "Incorrect email or password")
+errNotAuthenticated = ServerException("errNotAuthenticated", "Not authenticated")
+errSessionNotFound = ServerException("errSessionNotFound", "Session Not Found")
+
+errAnswerOptionDoesNotExist = ServerException("errAnswerOptionDoesNotExist", "Answer option does not exist")
+errTaskNotReservedForUser = ServerException("errTaskNotReservedForUser", "Task is not reserved for user")
+errTaskNotFound = ServerException("errTaskNotFound", "Task not found")
+errProjectNotFound = ServerException("errProjectNotFound", "Project not found")
+errAlreadyInProject = ServerException("errAlreadyInProject", "Already in the project")
+errNoAccessToTheProject = ServerException("errNoAccessToTheProject", "No access to the project")
+errWrongPassword = ServerException("errWrongPassword", "Wrong password")

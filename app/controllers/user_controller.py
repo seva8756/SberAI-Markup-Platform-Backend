@@ -7,7 +7,6 @@ from app.decorators.validate_json import validate_json
 from app.server.server import Server
 from . import errors
 from ..service.user_service import UserService
-from ..store.errors import ErrRecordAlreadyExist, ErrRecordNotFound
 
 module = Blueprint('users', __name__, url_prefix="/users")
 
@@ -15,15 +14,15 @@ module = Blueprint('users', __name__, url_prefix="/users")
 def set_auth_cookie(response, data):
     expiration_delta_access = int(current_app.config["JWT_ACCESS_TOKEN_EXPIRES"].total_seconds())
     expiration_delta_refresh = int(current_app.config["JWT_REFRESH_TOKEN_EXPIRES"].total_seconds())
-    response.set_cookie('refresh_token', data["refresh_token"], secure=True, httponly=True,
+    response.set_cookie('refresh_token', data["refresh_token"], httponly=True,
                         max_age=expiration_delta_refresh)
-    response.set_cookie('access_token', data["access_token"], secure=True, httponly=True,
+    response.set_cookie('access_token', data["access_token"], httponly=True,
                         max_age=expiration_delta_access)
 
 
 def delete_auth_cookie(response):
-    response.delete_cookie('refresh_token', secure=True, httponly=True)
-    response.delete_cookie('access_token', secure=True, httponly=True)
+    response.delete_cookie('refresh_token', httponly=True)
+    response.delete_cookie('access_token', httponly=True)
 
 
 @module.route('/create', methods=['POST'])
@@ -34,13 +33,13 @@ def users_create():
     fist_name = request.json.get('firstName')
     last_name = request.json.get('lastName')
     if email is None or password is None or fist_name is None or last_name is None:
-        return Server.error(http.HTTPStatus.BAD_REQUEST, 'Invalid JSON data')
+        return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     data, err = UserService.register(email, password, fist_name, last_name)
     if err is not None:
         if err in [errors.errUserAlreadyRegistered]:
             return Server.error(http.HTTPStatus.CONFLICT, err)
-        return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, "Processing error")
+        return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, errors.errProcessing)
 
     response = Server.respond(http.HTTPStatus.CREATED, data["user_data"])
     set_auth_cookie(response, data)
@@ -53,13 +52,13 @@ def users_sessions():
     email = request.json.get('email')
     password = request.json.get('password')
     if email is None or password is None:
-        return Server.error(http.HTTPStatus.BAD_REQUEST, 'Invalid JSON data')
+        return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     data, err = UserService.login(email, password)
     if err is not None:
         if err in [errors.errIncorrectEmailOrPassword]:
             return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     response = Server.respond(http.HTTPStatus.OK, data["user_data"])
     set_auth_cookie(response, data)
@@ -75,7 +74,7 @@ def users_refresh():
     if err is not None:
         if err in [errors.errSessionNotFound]:
             return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     response = Server.respond(http.HTTPStatus.OK, "Refresh successful")
     set_auth_cookie(response, data)
@@ -90,7 +89,7 @@ def users_logout():
     if err is not None:
         if err in [errors.errSessionNotFound]:
             return Server.error(http.HTTPStatus.NOT_FOUND, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     response = Server.respond(http.HTTPStatus.OK, "Logout successful")
     delete_auth_cookie(response)
@@ -105,6 +104,6 @@ def users_get_info_personal():
     if err is not None:
         if err in [errors.errUserNotFound]:
             return Server.error(http.HTTPStatus.NOT_FOUND, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     return Server.respond(http.HTTPStatus.OK, data)

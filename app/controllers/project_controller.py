@@ -30,7 +30,7 @@ def projects_get_task(project_id: int):
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     return Server.respond(http.HTTPStatus.OK, data)
 
@@ -43,7 +43,7 @@ def projects_answer_task():
     task_id = request.json.get('task_id')
     answer = request.json.get('answer')
     if project_id is None or task_id is None or answer is None:
-        return Server.error(http.HTTPStatus.BAD_REQUEST, 'Invalid JSON data')
+        return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     user_id = get_jwt_identity()
     err = ProjectService.set_answer_for_project_task(project_id, answer, task_id, user_id)
@@ -51,7 +51,7 @@ def projects_answer_task():
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errAnswerOptionDoesNotExist,
                    errors.errTaskNotReservedForUser, errors.errTaskNotFound]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     return Server.respond(http.HTTPStatus.OK, "Answer fixed")
 
@@ -63,13 +63,13 @@ def projects_join():
     code = request.json.get('code')
     password = request.json.get('password')
     if code is None or password is None:
-        return Server.error(http.HTTPStatus.BAD_REQUEST, 'Invalid JSON data')
+        return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     user_id = get_jwt_identity()
     data, err = ProjectService.join_to_project(code, password, user_id)
     if err is not None:
         if err in [errors.errAlreadyInProject, errors.errProjectNotFound, errors.errWrongPassword]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, "Processing error")
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     return Server.respond(http.HTTPStatus.OK, data)

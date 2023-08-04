@@ -1,5 +1,7 @@
 import http
 from functools import wraps
+
+from app.controllers import errors
 from app.server.server import Server
 
 from flask import (
@@ -14,7 +16,7 @@ def validate_json(f):
             if not isinstance(request.get_json(), dict):
                 raise
         except Exception:
-            return Server.error(http.HTTPStatus.BAD_REQUEST, "Invalid JSON format")
+            return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonFormat)
         return f(*args, **kw)
 
     return wrapper

@@ -7,6 +7,7 @@ from flask import (
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
+from app.errors import ServerException
 from app.file_store import FileStore
 from app.store.store import Store
 from app.config import Config
@@ -41,6 +42,8 @@ class Server:
 
     @staticmethod
     def error(code: int, error) -> Response:
+        if not isinstance(error, ServerException):
+            print("Error is not instance of ServerException. Use ServerException")
         if isinstance(error, Exception):
             error = str(error)
         return Server.respond(code, {"error": error})
