@@ -39,7 +39,9 @@ def users_create():
     if err is not None:
         if err in [errors.errUserAlreadyRegistered]:
             return Server.error(http.HTTPStatus.CONFLICT, err)
-        return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, errors.errProcessing)
+        if err in [errors.errUserNotPassValidation]:
+            return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, err)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     response = Server.respond(http.HTTPStatus.CREATED, data["user_data"])
     set_auth_cookie(response, data)

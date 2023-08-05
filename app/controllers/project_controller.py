@@ -28,7 +28,7 @@ def projects_get_task(project_id: int):
     user_id = get_jwt_identity()
     data, err = ProjectService.get_actual_task_in_project(project_id, user_id)
     if err is not None:
-        if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound]:
+        if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errNoTasksAvailable]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
         return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 

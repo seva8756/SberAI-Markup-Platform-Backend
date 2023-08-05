@@ -24,6 +24,16 @@ def get_task(s: Flask, user_id: int, project_id: int):
     return response.json.get('index')
 
 
+def answer_task(s: Flask, user_id: int, project_id: int, task_id: int, answer="answer"):
+    with s.app_context():
+        access_token = create_access_token(identity=user_id)
+    client = s.test_client()
+    client.set_cookie('access_token', access_token)
+    response = client.post(f'/projects/task-answer',
+                           json={"project_id": project_id, "task_id": task_id, "answer": answer})
+    return response.json
+
+
 class ProjectControllerTest(unittest.TestCase):
     def setUp(self):
         data_directory = utils.get_project_root() + '/data/projects'
@@ -69,7 +79,6 @@ class ProjectControllerTest(unittest.TestCase):
                 client = s.test_client()
                 client.set_cookie('access_token', val["token"])
                 response = client.get('/projects/all')
-                print(response.json)
                 self.assertEqual(response.status_code, val["expectedCode"])
 
     def test_HandleProjectsGetTask(self):
@@ -102,6 +111,19 @@ class ProjectControllerTest(unittest.TestCase):
 
             return p, u
 
+        def no_tasks_available():
+            p = TestProject()
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+            store.Project().Join(p.ID, u.ID)
+
+            for iter in range(50):
+                task_id = get_task(s, u.ID, p.ID)
+                answer_task(s, u.ID, p.ID, task_id)
+
+            return p, u
+
         testCases = (
             {
                 "name": "valid",
@@ -116,6 +138,11 @@ class ProjectControllerTest(unittest.TestCase):
             {
                 "name": "no_access_to_project",
                 "units": no_access_to_project,
+                "expectedCode": http.HTTPStatus.FORBIDDEN
+            },
+            {
+                "name": "no_tasks_available",
+                "units": no_tasks_available,
                 "expectedCode": http.HTTPStatus.FORBIDDEN
             },
         )

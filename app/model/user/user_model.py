@@ -1,6 +1,8 @@
 import bcrypt
 from cerberus import Validator
 
+from app.controllers import errors
+
 
 class User:
     ID: int
@@ -40,7 +42,8 @@ class User:
         }, allow_unknown=True)
         res = v.validate(vars(self))
         if len(v.errors) > 0:
-            return None, Exception(v.errors)
+            errors.errUserNotPassValidation.message = v.errors
+            return None, errors.errUserNotPassValidation
         return res, None
 
     def BeforeCreate(self) -> Exception:

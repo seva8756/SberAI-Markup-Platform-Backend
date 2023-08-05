@@ -6,11 +6,13 @@ errInvalidJsonData = ServerException("errInvalidJsonData", "Invalid JSON data")
 errInvalidJsonFormat = ServerException("errInvalidJsonFormat", "Invalid JSON format")
 
 errUserNotFound = ServerException("errUserNotFound", "User not found")
+errUserNotPassValidation = ServerException("errUserNotPassValidation", "User did not pass validation")
 errUserAlreadyRegistered = ServerException("errUserAlreadyRegistered", "User already registered")
 errIncorrectEmailOrPassword = ServerException("errIncorrectEmailOrPassword", "Incorrect email or password")
 errNotAuthenticated = ServerException("errNotAuthenticated", "Not authenticated")
 errSessionNotFound = ServerException("errSessionNotFound", "Session Not Found")
 
+errNoTasksAvailable = ServerException("errNoTasksAvailable", "No tasks available in this project")
 errAnswerOptionDoesNotExist = ServerException("errAnswerOptionDoesNotExist", "Answer option does not exist")
 errTaskNotReservedForUser = ServerException("errTaskNotReservedForUser", "Task is not reserved for user")
 errTaskNotFound = ServerException("errTaskNotFound", "Task not found")

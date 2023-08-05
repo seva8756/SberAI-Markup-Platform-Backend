@@ -17,6 +17,7 @@ class Project:
             "code": utils.ProjectCode.encode_id(self.ID),
             "title": self.config.title,
             "description": self.config.description,
+            "question_title": self.config.question_title,
             "answer_type": self.config.answer_type,
         }
         if self.config.answer_type == self.config.ANSWER_TYPE_CHOICE:

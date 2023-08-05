@@ -47,7 +47,7 @@ class ProjectService:
 
         result = Server.file_store().Project().get_sampling_tasks(project, user_id)
         if len(result) == 0:
-            return [], None
+            return None, errors.errNoTasksAvailable
         selected_task = result.iloc[0]
 
         data = {
