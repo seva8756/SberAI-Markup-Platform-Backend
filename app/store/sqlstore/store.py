@@ -37,10 +37,11 @@ class Store(store.Store):
             print(f"QueryInfo: {vars(QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid))}")
             connection.commit()
             cursor.close()
-            connection.close()
         except Exception as err:
             print(err)
             return None, err, None  # Exception("Database query failed")
+        finally:
+            connection.close()
         return results, None, QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid)
 
     def User(self) -> UserRepository:

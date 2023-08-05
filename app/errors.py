@@ -1,3 +1,6 @@
+import json
+
+
 class ServerException(Exception):
     name: str
     message: str
@@ -7,4 +10,4 @@ class ServerException(Exception):
         self.message = message
 
     def __str__(self):
-        return str(vars(self))
+        return json.dumps(vars(self))
