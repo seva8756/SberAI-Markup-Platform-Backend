@@ -77,7 +77,7 @@ class ProjectFileRepository:
             return reserved_tasks
 
         def is_row_empty(row: DataFrame, col):
-            return row[col].strip() == ""
+            return str(row[col]).strip() == ""
 
         def count_completed(row):
             reserved = self.count_reserved(row, user_id)
