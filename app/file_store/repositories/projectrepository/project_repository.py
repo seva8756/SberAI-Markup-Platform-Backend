@@ -104,8 +104,11 @@ class ProjectFileRepository:
     def get_images_by_fields_name(self, p: Project, row: DataFrame, fields: List[str]) -> List[str]:
         images = []
         for content_field in fields:
-            image = utils.get_image_in_base64(
+            image, err = utils.get_image_in_base64(
                 f"{self.projects_content % p.directory}/{row[content_field]}")
+            if err is not None:
+                print("Error get images by fields name:", err)
+                continue
             images.append(image)
         return images
 
