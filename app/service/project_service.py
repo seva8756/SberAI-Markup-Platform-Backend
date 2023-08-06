@@ -1,3 +1,4 @@
+import random
 from typing import Dict
 
 from .. import Server
@@ -48,7 +49,8 @@ class ProjectService:
         result = Server.file_store().Project().get_sampling_tasks(project, user_id)
         if len(result) == 0:
             return None, errors.errNoTasksAvailable
-        selected_task = result.iloc[0]
+        random_number = random.randint(0, len(result) - 1)
+        selected_task = result.iloc[random_number]
 
         data = {
             "index": int(selected_task.name),

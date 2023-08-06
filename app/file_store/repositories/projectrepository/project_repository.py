@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import List, Callable
 
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from app.file_store import errors
 from app.model.project.project_config_model import ProjectConfig
@@ -101,9 +101,12 @@ class ProjectFileRepository:
 
         return project.csv.loc[project.csv.apply(check, axis=1)]
 
-    def get_images_by_fields_name(self, p: Project, row: DataFrame, fields: List[str]) -> List[str]:
+    def get_images_by_fields_name(self, p: Project, row: Series, fields: List[str]) -> List[str]:
         images = []
         for content_field in fields:
+            if content_field not in row.index:
+                print("Error the field is not contained in the project")
+                continue
             image, err = utils.get_image_in_base64(
                 f"{self.projects_content % p.directory}/{row[content_field]}")
             if err is not None:
