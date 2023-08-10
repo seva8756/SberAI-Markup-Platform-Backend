@@ -33,3 +33,7 @@ class ProjectRepository:
     @abstractmethod
     def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int) -> Exception:
         pass
+
+    @abstractmethod
+    def FindCompletedTasks(self, user_id: int, project_id: int) -> (list[int], Exception):
+        pass

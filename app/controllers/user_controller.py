@@ -30,8 +30,8 @@ def delete_auth_cookie(response):
 def users_create():
     email = request.json.get('email')
     password = request.json.get('password')
-    fist_name = request.json.get('firstName')
-    last_name = request.json.get('lastName')
+    fist_name = request.json.get('first_name')
+    last_name = request.json.get('last_name')
     if email is None or password is None or fist_name is None or last_name is None:
         return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 

@@ -24,11 +24,28 @@ def projects_all():
 
 @module.route('/task-selection/<int:project_id>', methods=['GET'])
 @jwt_required()
-def projects_get_task(project_id: int):
+def projects_sampling_task(project_id: int):
     user_id = get_jwt_identity()
     data, err = ProjectService.get_actual_task_in_project(project_id, user_id)
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errNoTasksAvailable]:
+            return Server.error(http.HTTPStatus.FORBIDDEN, err)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+
+    return Server.respond(http.HTTPStatus.OK, data)
+
+
+@module.route('<int:project_id>/task/<int:task_id>', methods=['GET'])
+@jwt_required()
+def projects_get_task(project_id: int, task_id: int):
+    if task_id is None:
+        return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
+
+    user_id = get_jwt_identity()
+    data, err = ProjectService.get_task_from_history_by_id(project_id, task_id, user_id)
+    if err is not None:
+        if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errTaskNotFound,
+                   errors.errNoAccessToTask]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
         return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 

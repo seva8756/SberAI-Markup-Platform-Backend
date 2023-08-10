@@ -104,7 +104,7 @@ class ProjectRepositoryTest(unittest.TestCase):
         finally:
             teardown("users", "projects", "projects_participants")
 
-    def test_Join(self):
+    def test_SetAnswer(self):
         try:
             db, teardown = TestDB()
             s = Store(db)
@@ -114,6 +114,22 @@ class ProjectRepositoryTest(unittest.TestCase):
             s.User().Create(u)
 
             err = s.Project().SetAnswer(p.ID, 1, u.ID, "answer", 1)
+            self.assertIsNone(err)
+
+        finally:
+            teardown("users", "projects", "completed_tasks")
+
+    def test_FindCompletedTasks(self):
+        try:
+            db, teardown = TestDB()
+            s = Store(db)
+            p = TestProject()
+            s.Project().Create(p)
+            u = TestUser()
+            s.User().Create(u)
+
+            tasks, err = s.Project().FindCompletedTasks(u.ID, p.ID)
+            self.assertEqual(tasks, [])
             self.assertIsNone(err)
 
         finally:

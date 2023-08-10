@@ -12,6 +12,7 @@ errIncorrectEmailOrPassword = ServerException("errIncorrectEmailOrPassword", "In
 errNotAuthenticated = ServerException("errNotAuthenticated", "Not authenticated")
 errSessionNotFound = ServerException("errSessionNotFound", "Session Not Found")
 
+errNoAccessToTask = ServerException("errNoAccessToTask", "No access to task")
 errNoTasksAvailable = ServerException("errNoTasksAvailable", "No tasks available in this project")
 errAnswerOptionDoesNotExist = ServerException("errAnswerOptionDoesNotExist", "Answer option does not exist")
 errTaskNotReservedForUser = ServerException("errTaskNotReservedForUser", "Task is not reserved for user")

@@ -76,19 +76,24 @@ class ProjectFileRepository:
         if len(reserved_tasks) > 0:
             return reserved_tasks
 
-        def is_row_empty(row: DataFrame, col):
-            return str(row[col]).strip() == ""
+        def is_answer_empty(row: Series, _user_id):
+            _, err = self.get_task_answer(row, _user_id)
+            if err is not None:
+                return True
+            else:
+                return False
 
         def count_completed(row):
             reserved = self.count_reserved(row, user_id)
             already_completed = sum(
-                not is_row_empty(row, col) for col in project.csv.columns if col.startswith(self.user_prefix))
+                not is_answer_empty(row, col.removeprefix(self.user_prefix)) for col in project.csv.columns if
+                col.startswith(self.user_prefix))
             return already_completed + reserved
 
         check_callbacks: List[Callable[[DataFrame], bool]] = []
         # user_not_perform
         if user_prefix_id in project.csv.columns:
-            check_callbacks.append(lambda row: is_row_empty(row, user_prefix_id))
+            check_callbacks.append(lambda row: is_answer_empty(row, user_id))
 
         # not_max_resolves
         check_callbacks.append(lambda row: count_completed(row) < project.config.repeated_tasks)
@@ -100,6 +105,23 @@ class ProjectFileRepository:
             return result_condition
 
         return project.csv.loc[project.csv.apply(check, axis=1)]
+
+    def get_task(self, p: Project, task_id: int) -> (Series, Exception):
+        try:
+            return p.csv.iloc[task_id], None
+        except IndexError:
+            return None, errors.ErrTaskNotFound
+
+    def get_task_answer(self, row: Series, user_id: int) -> (Series, Exception):
+        try:
+            user_prefix_id = f"{self.user_prefix}{user_id}"
+            answer = str(row[user_prefix_id])
+            if answer.strip() == "":
+                raise KeyError()
+
+            return answer, None
+        except KeyError:
+            return None, errors.ErrAnswerNotFound
 
     def get_images_by_fields_name(self, p: Project, row: Series, fields: List[str]) -> List[str]:
         images = []
@@ -149,11 +171,14 @@ class ProjectFileRepository:
 
     def set_answer_task(self, p: Project, answer: str, task_id: int, user_id: int) -> (int, Exception):
         try:
-            execution_time_seconds, err = self.remove_reserve_task_by_user_id(p, p.csv.iloc[task_id], user_id)
-            if err is not None:
-                return None, err
-
+            execution_time_seconds = 0
             user_prefix_id = f"{self.user_prefix}{user_id}"
+
+            if user_prefix_id not in p.csv.columns or p.csv.at[task_id, user_prefix_id] == "":
+                execution_time_seconds, err = self.remove_reserve_task_by_user_id(p, p.csv.iloc[task_id], user_id)
+                if err is not None:
+                    return None, err
+
             if user_prefix_id not in p.csv.columns:
                 p.csv[user_prefix_id] = ""
             p.csv.at[task_id, user_prefix_id] = answer

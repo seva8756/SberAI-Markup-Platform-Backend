@@ -63,9 +63,9 @@ class User:
     def GetClientData(self):
         return {
             "ID": self.ID,
-            "firstName": self.first_name,
-            "lastName": self.last_name,
-            "isAdmin": self.is_admin
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "is_admin": self.is_admin
         }
 
     def _encryptString(self, s: str) -> (str, Exception):

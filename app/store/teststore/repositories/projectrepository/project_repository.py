@@ -51,6 +51,14 @@ class ProjectRepository(store.ProjectRepository):
                 return self.projects[prj], None
         return None, ErrRecordNotFound
 
+    def FindCompletedTasks(self, user_id: int, project_id: int) -> (list[int], Exception):
+        tasks = []
+        for index, value in enumerate(self.completed_tasks):
+            if value["user"] == user_id and value["project"] == project_id:
+                tasks.append(value)
+
+        return tasks, None
+
     def isParticipant(self, project_id: int, user_id: int) -> (bool, Exception):
         if project_id in self.projects_participants:
             for item in self.projects_participants[project_id]:
@@ -65,10 +73,18 @@ class ProjectRepository(store.ProjectRepository):
         self.projects_participants[project_id].append(user_id)
 
     def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int) -> Exception:
-        self.completed_tasks.append({
-            'user': user_id,
-            'project': project_id,
-            'task': task_id,
-            'answer': answer,
-            'execution_time': execution_time
-        })
+        already_exist_index = None
+        for index, value in enumerate(self.completed_tasks):
+            if value["user"] == user_id and value["task"] == task_id and value["project"] == project_id:
+                already_exist_index = index
+
+        if already_exist_index is not None:
+            self.completed_tasks[already_exist_index]["answer"] = answer
+        else:
+            self.completed_tasks.append({
+                'user': user_id,
+                'project': project_id,
+                'task': task_id,
+                'answer': answer,
+                'execution_time': execution_time
+            })

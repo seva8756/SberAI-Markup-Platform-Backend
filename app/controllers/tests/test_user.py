@@ -20,8 +20,8 @@ class UserControllerTest(unittest.TestCase):
         testCases = (
             {
                 "name": "valid",
-                "payload": {"email": u.email, "password": u.password, "firstName": u.first_name,
-                            "lastName": u.last_name},
+                "payload": {"email": u.email, "password": u.password, "first_name": u.first_name,
+                            "last_name": u.last_name},
                 "expectedCode": http.HTTPStatus.CREATED
             },
             {
@@ -31,7 +31,7 @@ class UserControllerTest(unittest.TestCase):
             },
             {
                 "name": "invalid params",
-                "payload": {"email": "invalid", "password": "short", "firstName": "", "lastName": ""},
+                "payload": {"email": "invalid", "password": "short", "first_name": "", "last_name": ""},
                 "expectedCode": http.HTTPStatus.UNPROCESSABLE_ENTITY
             },
         )

@@ -68,6 +68,16 @@ class ProjectRepository(store.ProjectRepository):
         p.closed = res[0][2]
         return p, None
 
+    def FindCompletedTasks(self, user_id: int, project_id: int) -> (list[int], Exception):
+        res, err, _ = self.store.query(
+            "SELECT task FROM completed_tasks WHERE user = %s AND project = %s",
+            user_id,
+            project_id)
+        if err is not None:
+            return None, err
+
+        return list(map(lambda item: item[0], res)), None
+
     def isParticipant(self, project_id: int, user_id: int) -> (bool, Exception):
         res, err, info = self.store.query(
             "SELECT ID FROM projects_participants WHERE project = %s AND user = %s",
@@ -90,11 +100,27 @@ class ProjectRepository(store.ProjectRepository):
 
     def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int) -> Exception:
         res, err, _ = self.store.query(
-            "INSERT INTO completed_tasks (user, project, task, answer, execution_time) VALUES (%s, %s, %s, %s, %s)",
+            "SELECT ID FROM completed_tasks WHERE user = %s AND project = %s AND task = %s",
             user_id,
             project_id,
-            task_id,
-            answer,
-            execution_time)
+            task_id)
         if err is not None:
             return err
+
+        if len(res) > 0:
+            res, err, _ = self.store.query(
+                "UPDATE completed_tasks SET answer = %s WHERE ID = %s",
+                answer,
+                res[0][0])
+            if err is not None:
+                return err
+        else:
+            res, err, _ = self.store.query(
+                "INSERT INTO completed_tasks (user, project, task, answer, execution_time) VALUES (%s, %s, %s, %s, %s)",
+                user_id,
+                project_id,
+                task_id,
+                answer,
+                execution_time)
+            if err is not None:
+                return err

@@ -1,8 +1,11 @@
 import random
 from typing import Dict
 
+from pandas import Series
+
 from .. import Server
 from ..controllers import errors
+from ..model.project.project_model import Project
 from ..store import errors as db_errors
 from ..file_store import errors as file_db_errors
 from ..utils import utils
@@ -22,9 +25,45 @@ class ProjectService:
             if err is not None:
                 print(f"Error reading the project config ({project.directory}):", err)
                 continue
-            projects_general_info.append(project.get_general_information())
+
+            tasks, err = Server.store().Project().FindCompletedTasks(user_id, project.ID)
+            if err is not None:
+                return None, err
+            projects_general_info.append({"completed_tasks": tasks, **project.get_general_information()})
 
         return projects_general_info, None
+
+    @staticmethod
+    def get_task_from_history_by_id(project_id: int, task_id: int, user_id: int) -> (Dict[str, str], Exception):
+        is_participant, err = Server.store().Project().isParticipant(project_id, user_id)
+        if err is not None:
+            return None, err
+        if not is_participant:
+            return None, errors.errNoAccessToTheProject
+
+        project, err = Server.store().Project().Find(project_id)
+        if err is not None:
+            if err == db_errors.ErrRecordNotFound:
+                return None, errors.errProjectNotFound
+            return None, err
+        project, err = Server.file_store().Project().get_config(project)
+        if err is not None:
+            return None, err
+        project, err = Server.file_store().Project().get_csv(project)
+        if err is not None:
+            return None, err
+
+        task, err = Server.file_store().Project().get_task(project, task_id)
+        if err is not None:
+            return None, err
+        answer, err = Server.file_store().Project().get_task_answer(task, user_id)
+        if err is not None:
+            if err == file_db_errors.ErrAnswerNotFound:
+                return None, errors.errNoAccessToTask
+            return None, err
+
+        data = ProjectUtils.get_task_data(project, task)
+        return {"answer": answer, **data}, None
 
     @staticmethod
     def get_actual_task_in_project(project_id: int, user_id: int) -> (Dict[str, str], Exception):
@@ -52,14 +91,7 @@ class ProjectService:
         random_number = random.randint(0, len(result) - 1)
         selected_task = result.iloc[random_number]
 
-        data = {
-            "index": int(selected_task.name),
-            "images": Server.file_store().Project().get_images_by_fields_name(project, selected_task,
-                                                                              project.config.question_fields),
-        }
-        if project.config.answer_type == project.config.ANSWER_TYPE_TEXT:
-            data["placeholder"] = selected_task[
-                project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
+        data = ProjectUtils.get_task_data(project, selected_task)
         Server.file_store().Project().reserve_task_by_user_id(project, selected_task, user_id)
         return data, None
 
@@ -126,3 +158,18 @@ class ProjectService:
             return None, err
 
         return project.get_general_information(), None
+
+
+class ProjectUtils:
+
+    @staticmethod
+    def get_task_data(project: Project, task: Series) -> dict[str, str]:
+        data = {
+            "index": int(task.name),
+            "images": Server.file_store().Project().get_images_by_fields_name(project, task,
+                                                                              project.config.question_fields),
+        }
+        if project.config.answer_type == project.config.ANSWER_TYPE_TEXT:
+            data["placeholder"] = task[
+                project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
+        return data

@@ -92,6 +92,81 @@ class ProjectControllerTest(unittest.TestCase):
             store.User().Create(u)
 
             store.Project().Join(p.ID, u.ID)
+            task_id = get_task(s, u.ID, p.ID)
+            answer_task(s, u.ID, p.ID, task_id)
+            return p, u, task_id
+
+        def project_not_found():
+            p = TestProject()
+            p.ID = 111
+            u = TestUser()
+            store.User().Create(u)
+
+            store.Project().Join(p.ID, u.ID)
+            return p, u, 1
+
+        def no_access_to_project():
+            p = TestProject()
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+
+            return p, u, 1
+
+        def no_access_to_task():
+            p = TestProject()
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+
+            store.Project().Join(p.ID, u.ID)
+            task_id = get_task(s, u.ID, p.ID)
+            return p, u, task_id
+
+        testCases = (
+            {
+                "name": "valid",
+                "units": valid,
+                "expectedCode": http.HTTPStatus.OK
+            },
+            {
+                "name": "project_not_found",
+                "units": project_not_found,
+                "expectedCode": http.HTTPStatus.FORBIDDEN
+            },
+            {
+                "name": "no_access_to_project",
+                "units": no_access_to_project,
+                "expectedCode": http.HTTPStatus.FORBIDDEN
+            },
+            {
+                "name": "no_access_to_task",
+                "units": no_access_to_task,
+                "expectedCode": http.HTTPStatus.FORBIDDEN
+            },
+        )
+
+        for val in testCases:
+            with self.subTest(val["name"]):
+                client = s.test_client()
+                p, u, task_id = val["units"]()
+                with s.app_context():
+                    access_token = create_access_token(identity=u.ID)
+                client.set_cookie('access_token', access_token)
+                response = client.get(f'/projects/{p.ID}/task/{task_id}')
+                self.assertEqual(response.status_code, val["expectedCode"])
+
+    def test_HandleProjectsSamplingTasks(self):
+        store = TestStore()
+        s = Server(store, TestConfig()).flask
+
+        def valid():
+            p = TestProject()
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+
+            store.Project().Join(p.ID, u.ID)
             return p, u
 
         def project_not_found():
@@ -171,6 +246,17 @@ class ProjectControllerTest(unittest.TestCase):
             task_id = get_task(s, u.ID, p.ID)
             return u, p, task_id
 
+        def valid_change_answer():
+            p = TestProject()
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+            store.Project().Join(p.ID, u.ID)
+
+            task_id = get_task(s, u.ID, p.ID)
+            answer_task(s, u.ID, p.ID, task_id)
+            return u, p, task_id
+
         def project_not_found():
             p = TestProject()
             p.ID = 111
@@ -215,6 +301,11 @@ class ProjectControllerTest(unittest.TestCase):
             {
                 "name": "valid",
                 "payload": valid,
+                "expectedCode": http.HTTPStatus.OK
+            },
+            {
+                "name": "valid_change_answer",
+                "payload": valid_change_answer,
                 "expectedCode": http.HTTPStatus.OK
             },
             {

@@ -5,7 +5,7 @@ class ProjectConfig:
     title: str
     description: str
     question_title: str
-    question_fields: str
+    question_fields: list[str]
     answer_type: str
     repeated_tasks: int
     password: str
@@ -34,4 +34,3 @@ class ProjectConfig:
             raise KeyError("Type answer 'choice' need answer_choice options")
         self.placeholder_fields = placeholder_fields
         self.answer_choice = answer_choice
-
