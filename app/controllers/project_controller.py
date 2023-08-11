@@ -59,8 +59,8 @@ def projects_answer_task():
     project_id = request.json.get('project_id')
     task_id = request.json.get('task_id')
     answer = request.json.get('answer')
-    answer_extended = request.json.get('answer_extended')
-    if project_id is None or task_id is None or answer is None or answer_extended is None:
+    answer_extended = request.json.get('answer_extended') or ""
+    if project_id is None or task_id is None or answer is None:
         return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     user_id = get_jwt_identity()
