@@ -6,7 +6,7 @@ from app.utils import utils
 
 class Project:
     ID: int
-    directory: int
+    directory: str
     closed: bool = False
     csv: DataFrame
     config: ProjectConfig = {}

@@ -21,7 +21,7 @@ class ProjectService:
 
         projects_general_info = []
         for project in projects:
-            config, err = Server.file_store().Project().get_config(project)
+            err = Server.file_store().Project().load_project(project, False)
             if err is not None:
                 print(f"Error reading the project config ({project.directory}):", err)
                 continue
@@ -46,10 +46,7 @@ class ProjectService:
             if err == db_errors.ErrRecordNotFound:
                 return None, errors.errProjectNotFound
             return None, err
-        project, err = Server.file_store().Project().get_config(project)
-        if err is not None:
-            return None, err
-        project, err = Server.file_store().Project().get_csv(project)
+        err = Server.file_store().Project().load_project(project)
         if err is not None:
             return None, err
 
@@ -78,10 +75,7 @@ class ProjectService:
             if err == db_errors.ErrRecordNotFound:
                 return None, errors.errProjectNotFound
             return None, err
-        project, err = Server.file_store().Project().get_config(project)
-        if err is not None:
-            return None, err
-        project, err = Server.file_store().Project().get_csv(project)
+        err = Server.file_store().Project().load_project(project)
         if err is not None:
             return None, err
 
@@ -92,7 +86,7 @@ class ProjectService:
         selected_task = result.iloc[random_number]
 
         data = ProjectUtils.get_task_data(project, selected_task)
-        Server.file_store().Project().reserve_task_by_user_id(project, selected_task, user_id)
+        Server.file_store().Project().reserve_task(project, selected_task, user_id)
         return data, None
 
     @staticmethod
@@ -109,10 +103,7 @@ class ProjectService:
             if err == db_errors.ErrRecordNotFound:
                 return errors.errProjectNotFound
             return err
-        project, err = Server.file_store().Project().get_config(project)
-        if err is not None:
-            return err
-        project, err = Server.file_store().Project().get_csv(project)
+        err = Server.file_store().Project().load_project(project)
         if err is not None:
             return err
 
@@ -149,9 +140,9 @@ class ProjectService:
         if is_participant:
             return None, errors.errAlreadyInProject
 
-        project, err = Server.file_store().Project().get_config(project)
+        err = Server.file_store().Project().load_project(project, False)
         if err is not None:
-            return None, err
+            return err
 
         if project.config.password != password:
             return None, errors.errWrongPassword
@@ -173,8 +164,8 @@ class ProjectUtils:
             data["placeholder"] = task[
                 project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
         if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
-            data["images"] = Server.file_store().Project().get_images_by_fields_name(project, task,
-                                                                                     project.config.question_fields),
+            data["images"] = Server.file_store().Project().get_task_images(project, task,
+                                                                           project.config.question_fields),
         return data
 
     @staticmethod
