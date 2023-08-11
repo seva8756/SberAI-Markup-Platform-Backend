@@ -59,16 +59,17 @@ def projects_answer_task():
     project_id = request.json.get('project_id')
     task_id = request.json.get('task_id')
     answer = request.json.get('answer')
-    if project_id is None or task_id is None or answer is None:
+    answer_extended = request.json.get('answer_extended')
+    if project_id is None or task_id is None or answer is None or answer_extended is None:
         return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     user_id = get_jwt_identity()
-    err = ProjectService.set_answer_for_project_task(project_id, answer, task_id, user_id)
+    err = ProjectService.set_answer_for_project_task(project_id, answer, answer_extended, task_id, user_id)
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errAnswerOptionDoesNotExist,
                    errors.errTaskNotReservedForUser, errors.errTaskNotFound]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, "Answer fixed")
 

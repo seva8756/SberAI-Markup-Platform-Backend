@@ -1,5 +1,6 @@
 import base64
-
+import imghdr
+import os
 from pathlib import Path
 
 
@@ -13,6 +14,25 @@ def get_image_in_base64(image_path: str) -> (str, Exception):
             return base64.b64encode(image_file.read()).decode('utf-8'), None
     except Exception as err:
         return None, err
+
+
+def save_base64_to_file(base64_string, file_path) -> Exception:
+    def is_valid_image(data):
+        image_type = imghdr.what(None, h=data)
+        return image_type is not None
+
+    try:
+        decoded_data = base64.b64decode(base64_string)
+        if not is_valid_image(decoded_data):
+            raise Exception("Not valid base64 data")
+        directory = os.path.dirname(file_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(file_path, 'wb') as output_file:
+            output_file.write(decoded_data)
+    except Exception as err:
+        return err
 
 
 class ProjectCode:

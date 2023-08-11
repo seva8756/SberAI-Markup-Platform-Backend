@@ -1,6 +1,7 @@
 class ProjectConfig:
     ANSWER_TYPE_TEXT = "text"
     ANSWER_TYPE_CHOICE = "choice"
+    ANSWER_TYPE_IMAGE = "image"
 
     title: str
     description: str
@@ -16,10 +17,10 @@ class ProjectConfig:
                  title: str,
                  description: str,
                  question_title: str,
-                 question_fields: str,
                  answer_type: str,
                  repeated_tasks: int,
                  password: str,
+                 question_fields: list[str] = [],
                  placeholder_fields: str = None,
                  answer_choice: dict[str, str] = None):
         self.title = title

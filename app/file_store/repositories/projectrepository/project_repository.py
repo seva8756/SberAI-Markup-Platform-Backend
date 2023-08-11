@@ -18,10 +18,13 @@ class ProjectFileRepository:
     projects_config = projects_data + "%s/config.json"
     projects_tasks = projects_data + "%s/tasks.csv"
     projects_content = projects_data + "%s/content/"
+    projects_uploaded_content = projects_data + "%s/uploaded_content/"
 
     task_reserved_seconds = timedelta(minutes=30)
 
+    uploaded_image_pattern = "task-%s_user-%s"
     user_prefix = "user_"
+    user_prefix_id_extended = f"{user_prefix}%s_extended"
 
     def check_reserved(self):
         projects_dir = os.listdir(self.projects_data)
@@ -77,7 +80,7 @@ class ProjectFileRepository:
             return reserved_tasks
 
         def is_answer_empty(row: Series, _user_id):
-            _, err = self.get_task_answer(row, _user_id)
+            _, err = self.get_task_answer(project, row, _user_id)
             if err is not None:
                 return True
             else:
@@ -112,12 +115,19 @@ class ProjectFileRepository:
         except IndexError:
             return None, errors.ErrTaskNotFound
 
-    def get_task_answer(self, row: Series, user_id: int) -> (Series, Exception):
+    def get_task_answer(self, p: Project, row: Series, user_id: int) -> (Series, Exception):
         try:
             user_prefix_id = f"{self.user_prefix}{user_id}"
             answer = str(row[user_prefix_id])
             if answer.strip() == "":
                 raise KeyError()
+
+            if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
+                image, err = utils.get_image_in_base64(
+                    f"{self.projects_uploaded_content % p.directory}{answer}")
+                if err is not None:
+                    return None, err
+                answer = image
 
             return answer, None
         except KeyError:
@@ -169,7 +179,8 @@ class ProjectFileRepository:
         except Exception as err:
             print("Remove reserve user_id failed:", err)
 
-    def set_answer_task(self, p: Project, answer: str, task_id: int, user_id: int) -> (int, Exception):
+    def set_answer_task(self, p: Project, answer: str, answer_extended: str, task_id: int, user_id: int) -> (
+            int, Exception):
         try:
             execution_time_seconds = 0
             user_prefix_id = f"{self.user_prefix}{user_id}"
@@ -178,6 +189,14 @@ class ProjectFileRepository:
                 execution_time_seconds, err = self.remove_reserve_task_by_user_id(p, p.csv.iloc[task_id], user_id)
                 if err is not None:
                     return None, err
+
+            if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
+                image_name = f"{self.uploaded_image_pattern % (task_id, user_id)}.jpg"
+                err = utils.save_base64_to_file(answer,
+                                                f"{self.projects_uploaded_content % p.directory}{image_name}")
+                if err is not None:
+                    return None, err
+                answer = image_name  # we save in csv not base64, but the path to the image
 
             if user_prefix_id not in p.csv.columns:
                 p.csv[user_prefix_id] = ""

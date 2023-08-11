@@ -56,7 +56,7 @@ class ProjectService:
         task, err = Server.file_store().Project().get_task(project, task_id)
         if err is not None:
             return None, err
-        answer, err = Server.file_store().Project().get_task_answer(task, user_id)
+        answer, err = Server.file_store().Project().get_task_answer(project, task, user_id)
         if err is not None:
             if err == file_db_errors.ErrAnswerNotFound:
                 return None, errors.errNoAccessToTask
@@ -96,7 +96,8 @@ class ProjectService:
         return data, None
 
     @staticmethod
-    def set_answer_for_project_task(project_id: int, answer: str, task_id: int, user_id: int) -> Exception:
+    def set_answer_for_project_task(project_id: int, answer: str, answer_extended: str, task_id: int,
+                                    user_id: int) -> Exception:
         is_participant, err = Server.store().Project().isParticipant(project_id, user_id)
         if err is not None:
             return err
@@ -115,11 +116,12 @@ class ProjectService:
         if err is not None:
             return err
 
-        if project.config.answer_type == project.config.ANSWER_TYPE_CHOICE:
-            if answer not in project.config.answer_choice:
-                return errors.errAnswerOptionDoesNotExist
+        answer, err = ProjectUtils.before_answer(project, answer)
+        if err is not None:
+            return err
 
-        execution_time_seconds, err = Server.file_store().Project().set_answer_task(project, answer, task_id, user_id)
+        execution_time_seconds, err = Server.file_store().Project().set_answer_task(project, answer, answer_extended,
+                                                                                    task_id, user_id)
         if err is not None:
             if err == file_db_errors.ErrTaskNotReservedForUser:
                 return errors.errTaskNotReservedForUser
@@ -166,10 +168,19 @@ class ProjectUtils:
     def get_task_data(project: Project, task: Series) -> dict[str, str]:
         data = {
             "index": int(task.name),
-            "images": Server.file_store().Project().get_images_by_fields_name(project, task,
-                                                                              project.config.question_fields),
         }
-        if project.config.answer_type == project.config.ANSWER_TYPE_TEXT:
+        if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT]:
             data["placeholder"] = task[
                 project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
+        if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
+            data["images"] = Server.file_store().Project().get_images_by_fields_name(project, task,
+                                                                                     project.config.question_fields),
         return data
+
+    @staticmethod
+    def before_answer(project: Project, answer: str) -> (str, Exception):
+        if project.config.answer_type in [project.config.ANSWER_TYPE_CHOICE]:
+            if answer not in project.config.answer_choice:
+                return None, errors.errAnswerOptionDoesNotExist
+
+        return answer, None
