@@ -11,6 +11,7 @@ from app.file_store import errors
 from app.model.project.project_config_model import ProjectConfig
 from app.model.project.project_model import Project
 from app.utils import utils
+import re
 
 
 class ProjectConfigManager:
@@ -49,7 +50,7 @@ class CsvFileManager:
         try:
             p.csv.to_csv(tasks_path, index=False)
         except Exception as err:
-            print("Update reserved json failed: ", err)
+            print("Save csv failed: ", err)
 
 
 class TaskReservationManager:
@@ -131,22 +132,37 @@ class TaskManager:
 
     def get_task(self, p: Project, task_id: int) -> (Series, Exception):
         try:
-            return p.csv.iloc[task_id], None
-        except IndexError:
+            return p.csv.loc[task_id], None
+        except KeyError:
             return None, errors.ErrTaskNotFound
 
-    def get_task_answer(self, p: Project, row: Series, answer_column: str) -> (Series, Exception):
+    def get_task_answer(self, p: Project, row: Series, answer_column: str, is_extended=False) -> (str, Exception):
+        try:
+            answer, err = self.answer_exist(row, answer_column)
+            if err is not None:
+                return None, err
+
+            if not is_extended:
+                if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
+                    image, err = utils.get_image_in_base64(self.get_answer_image_path(p.directory, answer))
+                    if err is not None:
+                        return None, err
+                    answer = image
+
+            return answer, None
+        except KeyError:
+            return None, errors.ErrAnswerNotFound
+
+    def set_answer_task(self, p: Project, answer: str, answer_column: str, task_id: int):
+        if answer_column not in p.csv.columns:
+            p.csv[answer_column] = ""
+        p.csv.at[task_id, answer_column] = answer
+
+    def answer_exist(self, row: Series, answer_column: str) -> (str, Exception):
         try:
             answer = str(row[answer_column])
             if answer.strip() == "":
                 raise KeyError()
-
-            if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
-                image, err = utils.get_image_in_base64(self.get_answer_image_path(p.directory, answer))
-                if err is not None:
-                    return None, err
-                answer = image
-
             return answer, None
         except KeyError:
             return None, errors.ErrAnswerNotFound
@@ -172,8 +188,20 @@ class TagManager:
     def get_answer_tag(self, user_id: int):
         return f"{self.user_prefix}{user_id}"
 
+    def get_answer_extended_tag(self, user_id: int):
+        return f"{self.user_prefix}{user_id}_extended"
+
     def get_uploaded_image_name(self, task_id: int, user_id: int):
         return f"task-{task_id}_user-{user_id}.jpg"
+
+    def get_answer_id(self, tag: str):
+        match = re.search(r'\d+', tag)
+        if match:
+            return match.group()
+        return ""
+
+    def is_answer_tag(self, tag: str):
+        return re.match(r'^user_\d+$', tag) is not None
 
 
 class ProjectFileRepository:
@@ -199,9 +227,26 @@ class ProjectFileRepository:
     def get_task(self, p: Project, task_id: int) -> (Series, Exception):
         return self.task_manager.get_task(p, task_id)
 
-    def get_task_answer(self, p: Project, task: Series, user_id: int) -> (Series, Exception):
+    def is_answer_exist(self, task: Series, user_id: int) -> bool:
         user_prefix_id = self.tag_manager.get_answer_tag(user_id)
-        return self.task_manager.get_task_answer(p, task, user_prefix_id)
+        _, err = self.task_manager.answer_exist(task, user_prefix_id)
+        if err is not None:
+            return False
+        return True
+
+    def get_task_answer(self, p: Project, task: Series, user_id: int) -> (dict[str, str], Exception):
+        answer_data = {}
+        user_prefix_id = self.tag_manager.get_answer_tag(user_id)
+        answer, err = self.task_manager.get_task_answer(p, task, user_prefix_id)
+        if err is not None:
+            return None, err
+        answer_data["answer"] = answer
+
+        user_prefix_extended = self.tag_manager.get_answer_extended_tag(user_id)
+        answer_extended, err = self.task_manager.get_task_answer(p, task, user_prefix_extended, True)
+        if err is None:
+            answer_data["answer_extended"] = answer_extended
+        return answer_data, None
 
     def get_sampling_tasks(self, project: Project, user_id: int) -> DataFrame:
         user_prefix_id = self.tag_manager.get_answer_tag(user_id)
@@ -215,17 +260,13 @@ class ProjectFileRepository:
             return reserved_tasks
 
         def is_answer_empty(row: Series, _user_id):
-            _, err = self.get_task_answer(project, row, _user_id)
-            if err is not None:
-                return True
-            else:
-                return False
+            return not self.is_answer_exist(row, _user_id)
 
         def count_completed(row):
             reserved = self.reservation_manager.count_reserved(row, user_id)
             already_completed = sum(
-                not is_answer_empty(row, col.removeprefix(self.tag_manager.user_prefix)) for col in project.csv.columns
-                if col.startswith(self.tag_manager.user_prefix))
+                not is_answer_empty(row, self.tag_manager.get_answer_id(col)) for col in project.csv.columns
+                if self.tag_manager.is_answer_tag(col))
             return already_completed + reserved
 
         check_callbacks: List[Callable[[DataFrame], bool]] = []
@@ -261,8 +302,12 @@ class ProjectFileRepository:
             execution_time_seconds = 0
             user_prefix_id = self.tag_manager.get_answer_tag(user_id)
 
-            if user_prefix_id not in p.csv.columns or p.csv.at[task_id, user_prefix_id] == "":
-                execution_time_seconds, err = self.remove_reserve_task(p, p.csv.iloc[task_id], user_id)
+            task, err = self.task_manager.get_task(p, task_id)
+            if err is not None:
+                return None, err
+            _, err = self.task_manager.answer_exist(task, user_prefix_id)
+            if err is not None:
+                execution_time_seconds, err = self.remove_reserve_task(p, task, user_id)
                 if err is not None:
                     return None, err
 
@@ -271,17 +316,16 @@ class ProjectFileRepository:
                 err = utils.save_base64_to_file(answer,
                                                 self.task_manager.get_answer_image_path(p.directory, image_name))
                 if err is not None:
-                    return None, err
+                    return None, errors.ErrPhotoUploadFailed
                 answer = image_name  # we save in csv not base64, but the path to the image
 
-            if user_prefix_id not in p.csv.columns:
-                p.csv[user_prefix_id] = ""
-            p.csv.at[task_id, user_prefix_id] = answer
+            self.task_manager.set_answer_task(p, answer, user_prefix_id, task_id)
+            if (p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]) or answer_extended != "":
+                self.task_manager.set_answer_task(p, answer_extended, self.tag_manager.get_answer_extended_tag(user_id),
+                                                  task_id)
 
             self.csv_manager.save_csv(p)
             return execution_time_seconds, None
-        except IndexError:
-            return None, errors.ErrTaskNotFound
         except Exception as err:
             print("Set answer user_id failed:", err)
             return None, err

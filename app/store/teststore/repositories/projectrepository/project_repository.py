@@ -72,7 +72,8 @@ class ProjectRepository(store.ProjectRepository):
             self.projects_participants[project_id] = []
         self.projects_participants[project_id].append(user_id)
 
-    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int) -> Exception:
+    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int,
+                  answer_extended: str = "") -> Exception:
         already_exist_index = None
         for index, value in enumerate(self.completed_tasks):
             if value["user"] == user_id and value["task"] == task_id and value["project"] == project_id:
@@ -80,11 +81,13 @@ class ProjectRepository(store.ProjectRepository):
 
         if already_exist_index is not None:
             self.completed_tasks[already_exist_index]["answer"] = answer
+            self.completed_tasks[already_exist_index]["answer_extended"] = answer_extended
         else:
             self.completed_tasks.append({
                 'user': user_id,
                 'project': project_id,
                 'task': task_id,
                 'answer': answer,
+                'answer_extended': answer_extended,
                 'execution_time': execution_time
             })

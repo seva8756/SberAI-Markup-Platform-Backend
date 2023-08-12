@@ -60,7 +60,7 @@ class ProjectService:
             return None, err
 
         data = ProjectUtils.get_task_data(project, task)
-        return {"answer": answer, **data}, None
+        return {**answer, **data}, None
 
     @staticmethod
     def get_actual_task_in_project(project_id: int, user_id: int) -> (Dict[str, str], Exception):
@@ -118,9 +118,11 @@ class ProjectService:
                 return errors.errTaskNotReservedForUser
             elif err == file_db_errors.ErrTaskNotFound:
                 return errors.errTaskNotFound
+            elif err == file_db_errors.ErrPhotoUploadFailed:
+                return errors.errPhotoUploadFailed
             return err
-        err = Server.store().Project().SetAnswer(project_id, task_id, user_id, answer,
-                                                 execution_time_seconds)
+        err = Server.store().Project().SetAnswer(project_id, task_id, user_id, answer, execution_time_seconds,
+                                                 answer_extended)
         if err is not None:
             return err
 

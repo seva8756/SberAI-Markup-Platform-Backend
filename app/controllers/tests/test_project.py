@@ -35,11 +35,12 @@ def answer_task(s: Flask, user_id: int, project_id: int, task_id: int, answer="a
 
 
 class ProjectControllerTest(unittest.TestCase):
+    projects = ["test_project", "testchoice_project", "testuploadimage_project"]
+
     def setUp(self):
         data_directory = utils.get_project_root() + '/data/projects'
         test_store_directory = utils.get_project_root() + '/app/file_store/testing'
-        projects = ["test_project", "testchoice_project"]
-        for p in projects:
+        for p in self.projects:
             # Удаление папки test_project, если она существует
             test_project_directory = os.path.join(data_directory, p)
             # Копирование папки test_store
@@ -48,7 +49,7 @@ class ProjectControllerTest(unittest.TestCase):
     def tearDown(self) -> None:
         data_directory = utils.get_project_root() + '/data/projects'
         projects = ["test_project", "testchoice_project"]
-        for p in projects:
+        for p in self.projects:
             test_project_directory = os.path.join(data_directory, p)
             if os.path.exists(test_project_directory):
                 shutil.rmtree(test_project_directory)
@@ -246,6 +247,16 @@ class ProjectControllerTest(unittest.TestCase):
             task_id = get_task(s, u.ID, p.ID)
             return u, p, task_id
 
+        def valid_upload_image():
+            p = TestProject(directory="testuploadimage_project")
+            store.Project().Create(p)
+            u = TestUser()
+            store.User().Create(u)
+            store.Project().Join(p.ID, u.ID)
+
+            task_id = get_task(s, u.ID, p.ID)
+            return u, p, task_id
+
         def valid_change_answer():
             p = TestProject()
             store.Project().Create(p)
@@ -304,6 +315,18 @@ class ProjectControllerTest(unittest.TestCase):
                 "expectedCode": http.HTTPStatus.OK
             },
             {
+                "name": "valid_upload_image",
+                "payload": valid_upload_image,
+                "answer": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdj8J3r+x8ABKkCN5+zgGgAAAAASUVORK5CYII=",
+                "expectedCode": http.HTTPStatus.OK
+            },
+            {
+                "name": "invalid_upload_image",
+                "payload": valid_upload_image,
+                # in this case we removed the correct base64 image response and get an error
+                "expectedCode": http.HTTPStatus.FORBIDDEN
+            },
+            {
                 "name": "valid_change_answer",
                 "payload": valid_change_answer,
                 "expectedCode": http.HTTPStatus.OK
@@ -334,11 +357,14 @@ class ProjectControllerTest(unittest.TestCase):
             with self.subTest(val["name"]):
                 client = s.test_client()
                 u, p, task_id = val["payload"]()
+                answer = val["answer"] if "answer" in val else "answer"
+                answer_extended = "answer_extended"
                 with s.app_context():
                     access_token = create_access_token(identity=u.ID)
                 client.set_cookie('access_token', access_token)
                 response = client.post(f'/projects/task-answer',
-                                       json={"project_id": p.ID, "task_id": task_id, "answer": "answer"})
+                                       json={"project_id": p.ID, "task_id": task_id, "answer": answer,
+                                             "answer_extended": answer_extended})
                 self.assertEqual(response.status_code, val["expectedCode"])
 
     def test_HandleProjectsJoin(self):

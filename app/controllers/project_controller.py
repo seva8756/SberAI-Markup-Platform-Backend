@@ -67,9 +67,9 @@ def projects_answer_task():
     err = ProjectService.set_answer_for_project_task(project_id, answer, answer_extended, task_id, user_id)
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errAnswerOptionDoesNotExist,
-                   errors.errTaskNotReservedForUser, errors.errTaskNotFound]:
+                   errors.errTaskNotReservedForUser, errors.errTaskNotFound, errors.errPhotoUploadFailed]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
 
     return Server.respond(http.HTTPStatus.OK, "Answer fixed")
 

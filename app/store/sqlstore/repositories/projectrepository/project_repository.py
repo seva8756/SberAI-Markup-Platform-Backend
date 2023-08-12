@@ -98,7 +98,8 @@ class ProjectRepository(store.ProjectRepository):
         if err is not None:
             return err
 
-    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int) -> Exception:
+    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int,
+                  answer_extended: str = "") -> Exception:
         res, err, _ = self.store.query(
             "SELECT ID FROM completed_tasks WHERE user = %s AND project = %s AND task = %s",
             user_id,
@@ -109,18 +110,20 @@ class ProjectRepository(store.ProjectRepository):
 
         if len(res) > 0:
             res, err, _ = self.store.query(
-                "UPDATE completed_tasks SET answer = %s WHERE ID = %s",
+                "UPDATE completed_tasks SET answer = %s, answer_extended = %s WHERE ID = %s",
                 answer,
+                answer_extended,
                 res[0][0])
             if err is not None:
                 return err
         else:
             res, err, _ = self.store.query(
-                "INSERT INTO completed_tasks (user, project, task, answer, execution_time) VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO completed_tasks (user, project, task, answer, answer_extended, execution_time) VALUES (%s, %s, %s, %s, %s, %s)",
                 user_id,
                 project_id,
                 task_id,
                 answer,
+                answer_extended,
                 execution_time)
             if err is not None:
                 return err
