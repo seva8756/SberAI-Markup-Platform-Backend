@@ -12,5 +12,6 @@
     "2": "Не знаю"
   },
   "repeated_tasks": 3,
+  "random_sampling": true,
   "password": "123123"
 }

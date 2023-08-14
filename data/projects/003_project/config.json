@@ -4,5 +4,6 @@
   "question_title": "Загрузите изображение чебурашки",
   "answer_type": "image",
   "repeated_tasks": 3,
+  "random_sampling": false,
   "password": "123123"
 }

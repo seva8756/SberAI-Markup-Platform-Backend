@@ -82,8 +82,8 @@ class ProjectService:
         result = Server.file_store().Project().get_sampling_tasks(project, user_id)
         if len(result) == 0:
             return None, errors.errNoTasksAvailable
-        random_number = random.randint(0, len(result) - 1)
-        selected_task = result.iloc[random_number]
+        task_index = random.randint(0, len(result) - 1) if project.config.random_sampling else 0
+        selected_task = result.iloc[task_index]
 
         data = ProjectUtils.get_task_data(project, selected_task)
         Server.file_store().Project().reserve_task(project, selected_task, user_id)
