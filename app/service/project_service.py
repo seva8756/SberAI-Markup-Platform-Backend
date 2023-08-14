@@ -166,7 +166,7 @@ class ProjectUtils:
             data["placeholder"] = task[
                 project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
         if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
-            data["images"] = Server.file_store().Project().get_task_images(project, task),
+            data["images"] = Server.file_store().Project().get_task_images(project, task)
         return data
 
     @staticmethod
