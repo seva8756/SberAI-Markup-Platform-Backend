@@ -26,10 +26,10 @@ class ProjectService:
                 print(f"Error reading the project config ({project.directory}):", err)
                 continue
 
-            tasks, err = Server.store().Project().FindCompletedTasks(user_id, project.ID)
+            data, err = ProjectUtils.get_project_data(project, user_id)
             if err is not None:
                 return None, err
-            projects_general_info.append({"completed_tasks": tasks, **project.get_general_information()})
+            projects_general_info.append(data)
 
         return projects_general_info, None
 
@@ -152,7 +152,10 @@ class ProjectService:
         if err is not None:
             return None, err
 
-        return project.get_general_information(), None
+        data, err = ProjectUtils.get_project_data(project, user_id)
+        if err is not None:
+            return None, err
+        return data, None
 
 
 class ProjectUtils:
@@ -168,6 +171,19 @@ class ProjectUtils:
         if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
             data["images"] = Server.file_store().Project().get_task_images(project, task)
         return data
+
+    @staticmethod
+    def get_project_data(project: Project, user_id: int = None) -> (dict[str, str], Exception):
+        data = {
+            **project.get_general_information(),
+            "completed_tasks": []
+        }
+        if user_id is not None:
+            tasks, err = Server.store().Project().FindCompletedTasks(user_id, project.ID)
+            if err is not None:
+                return None, err
+            data["completed_tasks"] = tasks
+        return data, None
 
     @staticmethod
     def before_answer(project: Project, answer: str) -> (str, Exception):
