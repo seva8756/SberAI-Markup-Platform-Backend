@@ -12,6 +12,7 @@ class User:
     last_name: str = ""
     is_admin: bool = False
     encrypted_password: str = ""
+    ip: str = ""
 
     def Validate(self) -> (bool, Exception):
         v = Validator({

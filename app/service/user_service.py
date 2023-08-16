@@ -28,12 +28,13 @@ class UserService:
         return {**tokens, "user_data": u.GetClientData()}, None
 
     @staticmethod
-    def register(email, password, fist_name, last_name) -> (Dict[str, str], Exception):
+    def register(email, password, fist_name, last_name, ip) -> (Dict[str, str], Exception):
         u = User()
         u.email = email
         u.password = password
         u.first_name = fist_name
         u.last_name = last_name
+        u.ip = ip
 
         err = Server.store().User().Create(u)
         if err is not None:

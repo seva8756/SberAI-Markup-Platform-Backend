@@ -22,11 +22,12 @@ class UserRepository(store.UserRepository):
             return err
 
         _, err, info = self.store.query(
-            "INSERT INTO users (email, encrypted_password, firstName, lastName) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO users (email, encrypted_password, firstName, lastName, reg_ip) VALUES (%s, %s, %s, %s, %s)",
             u.email,
             u.encrypted_password,
             u.first_name,
-            u.last_name)
+            u.last_name,
+            u.ip)
         if err is not None:
             if err.errno == errorcode.ER_DUP_ENTRY:
                 return ErrRecordAlreadyExist
