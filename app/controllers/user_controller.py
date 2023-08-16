@@ -35,7 +35,7 @@ def users_create():
     if email is None or password is None or fist_name is None or last_name is None:
         return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
-    client_ip = request.remote_addr
+    client_ip = request.headers.get('X-Real-IP') or ""
     data, err = UserService.register(email, password, fist_name, last_name, client_ip)
     if err is not None:
         if err in [errors.errUserAlreadyRegistered]:
