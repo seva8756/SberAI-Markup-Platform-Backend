@@ -144,7 +144,7 @@ class ProjectService:
 
         err = Server.file_store().Project().load_project(project, False)
         if err is not None:
-            return err
+            return None, err
 
         if project.config.password != password:
             return None, errors.errWrongPassword
@@ -164,10 +164,10 @@ class ProjectUtils:
     def get_task_data(project: Project, task: Series) -> dict[str, str]:
         data = {
             "index": int(task.name),
+            "question": Server.file_store().Project().get_task_question(project, task)
         }
         if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT]:
-            data["placeholder"] = task[
-                project.config.placeholder_fields] if project.config.placeholder_fields is not None else ""
+            data["placeholder"] = Server.file_store().Project().get_task_placeholder(project, task)
         if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
             data["images"] = Server.file_store().Project().get_task_images(project, task)
         return data

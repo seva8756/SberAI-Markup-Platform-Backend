@@ -2,7 +2,7 @@
   "title": "Выбор из вариантов ответа",
   "description": "Рассказываю про очень интересный проект, в котором можно выбрать вариант ответа",
   "question_title": "Что изображено на картинке?",
-  "question_fields": [
+  "question_content_fields": [
     "image_name"
   ],
   "answer_type": "choice",

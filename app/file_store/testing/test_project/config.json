@@ -2,7 +2,7 @@
   "title": "Интересный проект",
   "description": "Рассказываю про очень интересный проект",
   "question_title": "Что изображено на картинке?",
-  "question_fields": [
+  "question_content_fields": [
     "image_name"
   ],
   "answer_type": "text",

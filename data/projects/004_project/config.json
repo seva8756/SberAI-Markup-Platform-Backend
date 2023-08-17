@@ -1,13 +1,9 @@
 {
   "title": "Описание изображения",
   "description": "Рассказываю про очень интересный проект, в котором можно написать текст",
-  "question_title": "Что изображено на картинке?",
-  "question_content_fields": [
-    "image_name"
-  ],
-  "placeholder_field": "caption",
+  "question_field": "question",
   "answer_type": "text",
-  "repeated_tasks": 3,
-  "random_sampling": true,
+  "repeated_tasks": 99999,
+  "random_sampling": false,
   "password": "123123"
 }

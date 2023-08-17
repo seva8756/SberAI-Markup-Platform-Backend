@@ -159,13 +159,10 @@ class TaskManager:
         p.csv.at[task_id, answer_column] = answer
 
     def answer_exist(self, row: Series, answer_column: str) -> (str, Exception):
-        try:
-            answer = str(row[answer_column])
-            if answer.strip() == "":
-                raise KeyError()
-            return answer, None
-        except KeyError:
+        answer, err = self.get_field_value(row, answer_column, False)
+        if err is not None:
             return None, errors.ErrAnswerNotFound
+        return answer, None
 
     def get_images_by_fields_name(self, p: Project, row: Series, fields: List[str]) -> List[str]:
         images = []
@@ -179,6 +176,16 @@ class TaskManager:
                 continue
             images.append(image)
         return images
+
+    def get_field_value(self, row: Series, field: str, allow_empty=True) -> (str, Exception):
+        try:
+            value = str(row[field])
+            if not allow_empty:
+                if value.strip() == "":
+                    raise KeyError()
+            return value, None
+        except KeyError:
+            return "", errors.ErrFieldNotFound
 
 
 class TagManager:
@@ -331,7 +338,15 @@ class ProjectFileRepository:
             return None, err
 
     def get_task_images(self, p: Project, task: Series) -> list[str]:
-        return self.task_manager.get_images_by_fields_name(p, task, p.config.question_fields)
+        return self.task_manager.get_images_by_fields_name(p, task, p.config.question_content_fields)
+
+    def get_task_question(self, p: Project, task: Series) -> str:
+        value, err = self.task_manager.get_field_value(task, p.config.question_field)
+        return value
+
+    def get_task_placeholder(self, p: Project, task: Series) -> str:
+        value, err = self.task_manager.get_field_value(task, p.config.placeholder_field)
+        return value
 
     def check_reserved(self):
         projects_dir = os.listdir(self.projects_data)
