@@ -1,5 +1,10 @@
 VENV_NAME = venv
-VENV_ACTIVATE = "$(VENV_NAME)/Scripts/activate"
+
+ifeq ($(OS),Windows_NT)
+	VENV_ACTIVATE = "$(VENV_NAME)/Scripts/activate"
+else
+	VENV_ACTIVATE = "$(VENV_NAME)/bin/activate"
+endif
 
 help:
 	@echo "install - install all dependencies;"
