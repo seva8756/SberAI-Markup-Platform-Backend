@@ -22,5 +22,6 @@ include/*
 env/
 
 configs/apiserver.toml
+data/projects/*
 
 venv/
