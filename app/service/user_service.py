@@ -79,5 +79,6 @@ class UserService:
             if err == db_errors.ErrRecordNotFound:
                 return None, errors.errUserNotFound
             return None, err
+        tasks, err = Server.store().Project().FindUserCompletedTasks(id)
 
-        return u.GetClientData(), None
+        return {"completed_tasks": len(tasks), **u.GetClientData()}, None

@@ -1,3 +1,5 @@
+import datetime
+
 import bcrypt
 from cerberus import Validator
 
@@ -12,6 +14,7 @@ class User:
     last_name: str = ""
     is_admin: bool = False
     encrypted_password: str = ""
+    reg_date: datetime.datetime
     ip: str = ""
 
     def Validate(self) -> (bool, Exception):
@@ -66,7 +69,9 @@ class User:
             "ID": self.ID,
             "first_name": self.first_name,
             "last_name": self.last_name,
-            "is_admin": self.is_admin
+            "is_admin": self.is_admin,
+            "email": self.email,
+            "reg_date": self.reg_date
         }
 
     def _encryptString(self, s: str) -> (str, Exception):

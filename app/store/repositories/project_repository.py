@@ -38,3 +38,7 @@ class ProjectRepository:
     @abstractmethod
     def FindCompletedTasks(self, user_id: int, project_id: int) -> (list[int], Exception):
         pass
+
+    @abstractmethod
+    def FindUserCompletedTasks(self, user_id: int) -> (list[int], Exception):
+        pass

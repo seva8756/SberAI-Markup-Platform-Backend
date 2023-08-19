@@ -50,6 +50,7 @@ class UserRepository(store.UserRepository):
         u.last_name = res[0][3]
         u.encrypted_password = res[0][4]
         u.is_admin = bool(res[0][5])
+        u.reg_date = res[0][7]
         return u, None
 
     def Find(self, id: int) -> (User, Exception):
@@ -67,4 +68,5 @@ class UserRepository(store.UserRepository):
         u.last_name = res[0][3]
         u.encrypted_password = res[0][4]
         u.is_admin = bool(res[0][5])
+        u.reg_date = res[0][7]
         return u, None

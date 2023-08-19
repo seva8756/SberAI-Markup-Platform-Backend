@@ -78,6 +78,15 @@ class ProjectRepository(store.ProjectRepository):
 
         return list(map(lambda item: item[0], res)), None
 
+    def FindUserCompletedTasks(self, user_id: int) -> (list[int], Exception):
+        res, err, _ = self.store.query(
+            "SELECT task FROM completed_tasks WHERE user = %s",
+            user_id)
+        if err is not None:
+            return None, err
+
+        return list(map(lambda item: item[0], res)), None
+
     def isParticipant(self, project_id: int, user_id: int) -> (bool, Exception):
         res, err, info = self.store.query(
             "SELECT ID FROM projects_participants WHERE project = %s AND user = %s",
