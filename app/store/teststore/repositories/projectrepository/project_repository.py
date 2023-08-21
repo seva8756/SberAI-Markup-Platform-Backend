@@ -59,6 +59,14 @@ class ProjectRepository(store.ProjectRepository):
 
         return tasks, None
 
+    def FindUserCompletedTasks(self, user_id: int) -> (list[int], Exception):
+        tasks = []
+        for index, value in enumerate(self.completed_tasks):
+            if value["user"] == user_id:
+                tasks.append(value)
+
+        return tasks, None
+
     def isParticipant(self, project_id: int, user_id: int) -> (bool, Exception):
         if project_id in self.projects_participants:
             for item in self.projects_participants[project_id]:

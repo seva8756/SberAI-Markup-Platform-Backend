@@ -8,7 +8,7 @@ from app.store.repositories.user_repository import UserRepository
 class Store:
 
     @abstractmethod
-    def query(self, query: str, *args) -> (any, Exception):
+    def query(self, query: str, *args, one=False) -> (any, Exception):
         pass
 
     @abstractmethod

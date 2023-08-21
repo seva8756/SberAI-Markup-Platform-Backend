@@ -88,6 +88,6 @@ def projects_join():
     if err is not None:
         if err in [errors.errAlreadyInProject, errors.errProjectNotFound, errors.errWrongPassword]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, data)

@@ -68,6 +68,22 @@ class ProjectRepositoryTest(unittest.TestCase):
         self.assertIsNone(err)
         self.assertEqual(len(tasks), 1)
 
+    def test_FindCompletedTasks(self):
+        s = TestStore()
+        p = TestProject()
+        u = TestUser()
+        s.User().Create(u)
+        s.Project().Create(p)
+
+        tasks, err = s.Project().FindUserCompletedTasks(u.ID)
+        self.assertEqual(tasks, [])
+
+        s.Project().SetAnswer(p.ID, 1, u.ID, "answer2", 1)
+        tasks, err = s.Project().FindUserCompletedTasks(u.ID)
+
+        self.assertIsNone(err)
+        self.assertEqual(len(tasks), 1)
+
     def test_isParticipant(self):
         s = TestStore()
         p = TestProject()

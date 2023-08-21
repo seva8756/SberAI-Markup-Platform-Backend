@@ -1,5 +1,4 @@
 import mysql.connector
-from mysql.connector import pooling
 
 import app.store.store as store
 from app.store.sqlstore.repositories.projectrepository.project_repository import ProjectRepository
@@ -25,14 +24,25 @@ class Store(store.Store):
     def __init__(self, connection_pool: mysql.connector.pooling.MySQLConnectionPool):
         self.connection_pool = connection_pool
 
-    def query(self, query: str, *args) -> (any, Exception, QueryInfo):
+    def query(self, query: str, *args, one=False) -> (any, Exception, QueryInfo):
+        def row_to_dict(columns, row):
+            return dict(zip(columns, row))
+
         try:
             connection = self.connection_pool.get_connection()
             cursor = connection.cursor()
-            print(f"Args: {args}")
+            print(f"{query}, Args: {args}")
             cursor.execute(query, args)
+            results = None
+            if cursor.description:
+                columns = [column[0] for column in cursor.description]
+                if one:
+                    row = cursor.fetchone()
+                    if row:
+                        results = row_to_dict(columns, row)
+                else:
+                    results = [row_to_dict(columns, row) for row in cursor.fetchall()]
 
-            results = cursor.fetchall()
             print(f"Results: {results}")
             print(f"QueryInfo: {vars(QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid))}")
             connection.commit()

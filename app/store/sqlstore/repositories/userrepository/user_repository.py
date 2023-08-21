@@ -37,36 +37,36 @@ class UserRepository(store.UserRepository):
 
     def FindByEmail(self, email: str) -> (User, Exception):
         res, err, _ = self.store.query("SELECT * FROM users WHERE email = %s",
-                                       email)
+                                       email, one=True)
         if err is not None:
             return None, err
-        if len(res) == 0:
+        if res is None:
             return None, ErrRecordNotFound
 
         u = User()
-        u.ID = res[0][0]
-        u.email = res[0][1]
-        u.first_name = res[0][2]
-        u.last_name = res[0][3]
-        u.encrypted_password = res[0][4]
-        u.is_admin = bool(res[0][5])
-        u.reg_date = res[0][7]
+        u.ID = res["ID"]
+        u.email = res["email"]
+        u.first_name = res["firstName"]
+        u.last_name = res["lastName"]
+        u.encrypted_password = res["encrypted_password"]
+        u.is_admin = bool(res["isAdmin"])
+        u.reg_date = res["reg_date"]
         return u, None
 
     def Find(self, id: int) -> (User, Exception):
         res, err, _ = self.store.query("SELECT * FROM users WHERE ID = %s",
-                                       id)
+                                       id, one=True)
         if err is not None:
             return None, err
-        if len(res) == 0:
+        if res is None:
             return None, ErrRecordNotFound
 
         u = User()
-        u.ID = res[0][0]
-        u.email = res[0][1]
-        u.first_name = res[0][2]
-        u.last_name = res[0][3]
-        u.encrypted_password = res[0][4]
-        u.is_admin = bool(res[0][5])
-        u.reg_date = res[0][7]
+        u.ID = res["ID"]
+        u.email = res["email"]
+        u.first_name = res["firstName"]
+        u.last_name = res["lastName"]
+        u.encrypted_password = res["encrypted_password"]
+        u.is_admin = bool(res["isAdmin"])
+        u.reg_date = res["reg_date"]
         return u, None

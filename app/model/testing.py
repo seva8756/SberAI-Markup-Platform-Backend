@@ -1,3 +1,5 @@
+import datetime
+
 from app.model.project.project_model import Project
 from app.model.token.token_model import Token
 from app.model.user.user_model import User
@@ -10,6 +12,7 @@ def TestUser(email="user@example.org", password="password", first_name="first_na
     u.password = password
     u.first_name = first_name
     u.last_name = last_name
+    u.reg_date = datetime.datetime(1970, 1, 1)
     return u
 
 

@@ -30,16 +30,16 @@ class TokenRepository(store.TokenRepository):
     def FindByRefresh(self, refresh: str) -> (Token, Exception):
         res, err, _ = self.store.query(
             "SELECT ID, user, refresh_token FROM sessions WHERE refresh_token = %s AND reseted = 0",
-            refresh)
+            refresh, one=True)
         if err is not None:
             return err
-        if len(res) == 0:
+        if res is None:
             return None, ErrRecordNotFound
 
         t = Token()
-        t.ID = res[0][0]
-        t.user = res[0][1]
-        t.refresh_token = res[0][2]
+        t.ID = res["ID"]
+        t.user = res["user"]
+        t.refresh_token = res["refresh_token"]
         return t, None
 
     def Reset(self, refresh: str) -> Exception:
