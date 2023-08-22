@@ -6,6 +6,7 @@ class ProjectConfig:
     title: str
     description: str
     question_title: str
+    instruction: str
     question_content_fields: list[str]
     question_field: str
     answer_type: str
@@ -21,6 +22,7 @@ class ProjectConfig:
                  answer_type: str,
                  repeated_tasks: int,
                  password: str,
+                 instruction: str = "",
                  question_title: str = "",
                  random_sampling: bool = False,
                  question_field: str = "",
@@ -30,6 +32,7 @@ class ProjectConfig:
         self.title = title
         self.description = description
         self.question_title = question_title
+        self.instruction = instruction
         self.question_content_fields = question_content_fields
         self.question_field = question_field
         self.answer_type = answer_type
