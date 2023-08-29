@@ -32,8 +32,9 @@ def new_db(database_config: Config.database) -> mysql.connector.pooling.MySQLCon
 
 
 def new_logger(lvl: str) -> logging.Logger:
-    logger_instance = logging.getLogger('logger')
+    logger_instance = logging.getLogger('app')
     logger_instance.setLevel(logging.getLevelName(lvl))
+    logger_instance.propagate = False
 
     console_handler = logging.StreamHandler()
     file_handler = logging.FileHandler('app.log')
