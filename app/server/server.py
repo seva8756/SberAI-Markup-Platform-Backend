@@ -7,6 +7,8 @@ from flask import (
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
+import logging
+from app.controllers import errors
 from app.errors import ServerException
 from app.file_store import FileStore
 from app.store.store import Store
@@ -16,9 +18,10 @@ from app.config import Config
 class Server:
     flask: Flask
     store: Store
-    file_store_: FileStore = FileStore()
+    logger_instance: logging.Logger
+    file_store_instance: FileStore = FileStore()
 
-    def __init__(self, store: Store, config: Config.flask):
+    def __init__(self, store: Store, config: Config.flask, logger: logging.Logger = logging.basicConfig()):
         app = Flask(__name__)
         app.config.from_object(config)
         JWTManager(app)
@@ -26,6 +29,7 @@ class Server:
 
         self.flask = app
         self.store = store
+        self.logger_instance = logger
 
         app.config["current_server"] = self
 
@@ -43,7 +47,9 @@ class Server:
     @staticmethod
     def error(code: int, error) -> Response:
         if not isinstance(error, ServerException):
-            print("Error is not instance of ServerException. Use ServerException")
+            Server.logger().error(error)
+            error = errors.errProcessing
+            # Server.logger.warning("Error is not instance of ServerException. Use ServerException")
         if isinstance(error, Exception):
             error = str(error)
         return Server.respond(code, {"error": error})
@@ -58,8 +64,12 @@ class Server:
 
     @staticmethod
     def file_store() -> FileStore:
-        return current_app.config["current_server"].file_store_
+        return current_app.config["current_server"].file_store_instance
 
     @staticmethod
     def flask() -> Store:
         return current_app.config["current_server"].flask
+
+    @staticmethod
+    def logger() -> logging.Logger:
+        return current_app.config["current_server"].logger_instance

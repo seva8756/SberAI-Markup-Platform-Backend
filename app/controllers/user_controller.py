@@ -42,7 +42,7 @@ def users_create():
             return Server.error(http.HTTPStatus.CONFLICT, err)
         if err in [errors.errUserNotPassValidation]:
             return Server.error(http.HTTPStatus.UNPROCESSABLE_ENTITY, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     response = Server.respond(http.HTTPStatus.CREATED, data["user_data"])
     set_auth_cookie(response, data)
@@ -61,7 +61,7 @@ def users_sessions():
     if err is not None:
         if err in [errors.errIncorrectEmailOrPassword]:
             return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     response = Server.respond(http.HTTPStatus.OK, data["user_data"])
     set_auth_cookie(response, data)
@@ -77,7 +77,7 @@ def users_refresh():
     if err is not None:
         if err in [errors.errSessionNotFound]:
             return Server.error(http.HTTPStatus.UNAUTHORIZED, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     response = Server.respond(http.HTTPStatus.OK, "Refresh successful")
     set_auth_cookie(response, data)
@@ -92,7 +92,7 @@ def users_logout():
     if err is not None:
         if err in [errors.errSessionNotFound]:
             return Server.error(http.HTTPStatus.NOT_FOUND, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     response = Server.respond(http.HTTPStatus.OK, "Logout successful")
     delete_auth_cookie(response)
@@ -107,6 +107,6 @@ def users_get_info_personal():
     if err is not None:
         if err in [errors.errUserNotFound]:
             return Server.error(http.HTTPStatus.NOT_FOUND, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, data)

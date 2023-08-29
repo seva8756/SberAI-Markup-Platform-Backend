@@ -1,4 +1,7 @@
+import logging
+
 import mysql.connector
+from tabulate import tabulate
 
 import app.store.store as store
 from app.store.sqlstore.repositories.projectrepository.project_repository import ProjectRepository
@@ -17,23 +20,26 @@ class QueryInfo:
 
 class Store(store.Store):
     connection_pool: mysql.connector.pooling.MySQLConnectionPool
+    logger: logging.Logger
     user_repository: UserRepository = None
     token_repository: TokenRepository = None
     project_repository: ProjectRepository = None
 
-    def __init__(self, connection_pool: mysql.connector.pooling.MySQLConnectionPool):
+    def __init__(self, connection_pool: mysql.connector.pooling.MySQLConnectionPool, logger: logging.Logger):
         self.connection_pool = connection_pool
+        self.logger = logger
 
     def query(self, query: str, *args, one=False) -> (any, Exception, QueryInfo):
         def row_to_dict(columns, row):
             return dict(zip(columns, row))
 
+        connection = None
+        results = None
+        info = None
         try:
             connection = self.connection_pool.get_connection()
             cursor = connection.cursor()
-            print(f"{query}, Args: {args}")
             cursor.execute(query, args)
-            results = None
             if cursor.description:
                 columns = [column[0] for column in cursor.description]
                 if one:
@@ -42,17 +48,20 @@ class Store(store.Store):
                         results = row_to_dict(columns, row)
                 else:
                     results = [row_to_dict(columns, row) for row in cursor.fetchall()]
-
-            print(f"Results: {results}")
-            print(f"QueryInfo: {vars(QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid))}")
+                    
+            info = QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid)
+            while cursor.nextset():
+                pass
             connection.commit()
             cursor.close()
         except Exception as err:
-            print(err)
-            return None, err, None  # Exception("Database query failed")
+            return None, err, None
         finally:
             connection.close()
-        return results, None, QueryInfo(rows_affected=cursor.rowcount, last_row_id=cursor.lastrowid)
+            self.logger.info(tabulate(
+                [[query, str(args)[:100], results, vars(info) if info else ""]],
+                headers=["Запрос", "Аргументы", "Результат", "Информация по запросу"]))
+        return results, None, info
 
     def User(self) -> UserRepository:
         if self.user_repository is not None:

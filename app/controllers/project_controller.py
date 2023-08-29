@@ -30,7 +30,7 @@ def projects_sampling_task(project_id: int):
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errNoTasksAvailable]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, data)
 
@@ -47,7 +47,7 @@ def projects_get_task(project_id: int, task_id: int):
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errTaskNotFound,
                    errors.errNoAccessToTask]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, data)
 
@@ -69,7 +69,7 @@ def projects_answer_task():
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errAnswerOptionDoesNotExist,
                    errors.errTaskNotReservedForUser, errors.errTaskNotFound, errors.errPhotoUploadFailed]:
             return Server.error(http.HTTPStatus.FORBIDDEN, err)
-        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, errors.errProcessing)
+        return Server.error(http.HTTPStatus.INTERNAL_SERVER_ERROR, err)
 
     return Server.respond(http.HTTPStatus.OK, "Answer fixed")
 

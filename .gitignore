@@ -21,6 +21,8 @@ include/*
 
 env/
 
+*.log
+
 configs/apiserver.toml
 data/projects/*
 

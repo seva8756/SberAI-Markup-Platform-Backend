@@ -3,8 +3,7 @@ import unittest
 from app.model.testing import TestToken
 from app.store.errors import ErrRecordNotFound
 
-from app.store.sqlstore.testing import TestDB
-from app.store.sqlstore import Store
+from app.store.sqlstore.testing import TestStore
 
 
 class UserRepositoryTest(unittest.TestCase):
@@ -14,8 +13,7 @@ class UserRepositoryTest(unittest.TestCase):
 
     def test_Create(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             t = TestToken()
 
             err = s.Token().Create(t)
@@ -26,8 +24,7 @@ class UserRepositoryTest(unittest.TestCase):
 
     def test_FindByRefresh(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             t1 = TestToken()
             _, err = s.Token().FindByRefresh(t1.refresh_token)
             self.assertEqual(err, ErrRecordNotFound)
@@ -41,8 +38,7 @@ class UserRepositoryTest(unittest.TestCase):
 
     def test_Reset(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             t1 = TestToken()
             err = s.Token().Reset(t1.refresh_token)
             self.assertEqual(err, ErrRecordNotFound)
@@ -55,8 +51,7 @@ class UserRepositoryTest(unittest.TestCase):
 
     def test_Update(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             t1 = TestToken()
             err = s.Token().Update(t1)
             self.assertIsNotNone(err)

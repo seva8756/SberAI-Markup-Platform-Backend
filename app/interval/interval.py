@@ -14,7 +14,7 @@ def interval():
 
 
 def register_interval(server):
-    jobs.append(server.file_store_.Project().check_reserved)
+    jobs.append(server.file_store_instance.Project().check_reserved)
 
     scheduler = BackgroundScheduler()
     interval()

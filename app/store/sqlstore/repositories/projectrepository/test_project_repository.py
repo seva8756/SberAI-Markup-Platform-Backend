@@ -3,8 +3,7 @@ import unittest
 from app.model.testing import TestProject, TestUser
 from app.store.errors import ErrRecordNotFound
 
-from app.store.sqlstore.testing import TestDB
-from app.store.sqlstore import Store
+from app.store.sqlstore.testing import TestStore
 
 
 class ProjectRepositoryTest(unittest.TestCase):
@@ -14,8 +13,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_Create(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             err = s.Project().Create(p)
             self.assertIsNone(err)
@@ -25,8 +23,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_Update(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             err = s.Project().Update(p)
             self.assertIsNotNone(err)
@@ -39,8 +36,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_FindAllByUserId(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
             u = TestUser()
@@ -57,8 +53,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_Find(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
 
@@ -72,8 +67,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_isParticipant(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
             u = TestUser()
@@ -91,8 +85,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_Join(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
             u = TestUser()
@@ -106,8 +99,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_SetAnswer(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
             u = TestUser()
@@ -121,8 +113,7 @@ class ProjectRepositoryTest(unittest.TestCase):
 
     def test_FindCompletedTasks(self):
         try:
-            db, teardown = TestDB()
-            s = Store(db)
+            s, teardown = TestStore()
             p = TestProject()
             s.Project().Create(p)
             u = TestUser()
