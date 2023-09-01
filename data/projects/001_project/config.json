@@ -1,0 +1,59 @@
+{
+  "title": "Описание изображения",
+  "description": "Рассказываю про очень интересный проект, в котором можно написать текст",
+  "instruction": "Вам необходимо описать данные картинки",
+  "question_title": "Что изображено на картинке?",
+  "repeated_tasks": 3,
+  "random_sampling": true,
+  "password": "123123",
+  "components": {
+    "images": {
+      "position": 1,
+      "name": "Серия изображений",
+      "purpose": "content",
+      "type": "images",
+      "content_fields": [
+        "image_name"
+      ]
+    },
+    "input": {
+      "position": 2,
+      "name": "Опишите изображение",
+      "purpose": "answer",
+      "type": "input",
+      "placeholder_field": "caption",
+      "visuals": {
+        "fill": true
+      },
+      "require": true
+    },
+    "input2": {
+      "position": 2,
+      "name": "Опишите изображение",
+      "purpose": "answer",
+      "type": "input",
+      "placeholder_field": "caption",
+      "visuals": {
+        "fill": true
+      }
+    },
+    "choice": {
+      "position": 3,
+      "name": "Определите категорию изображения",
+      "purpose": "answer",
+      "type": "choice",
+      "options": {
+        "0": "Не блокируем запрос",
+        "1": "Склонения к самоубийству"
+      },
+      "require": true
+    },
+    "image": {
+      "position": 4,
+      "name": "Загрузите изображение",
+      "purpose": "answer",
+      "type": "image",
+      "require": true
+    }
+  }
+}
