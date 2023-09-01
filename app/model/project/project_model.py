@@ -19,8 +19,6 @@ class Project:
             "description": self.config.description,
             "instruction": self.config.instruction,
             "question_title": self.config.question_title,
-            "answer_type": self.config.answer_type,
+            "components": self.config.components
         }
-        if self.config.answer_type == self.config.ANSWER_TYPE_CHOICE:
-            data["answer_choice"] = self.config.answer_choice
         return data

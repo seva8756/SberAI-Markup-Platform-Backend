@@ -24,7 +24,7 @@ def get_task(s: Flask, user_id: int, project_id: int):
     return response.json.get('index')
 
 
-def answer_task(s: Flask, user_id: int, project_id: int, task_id: int, answer="answer"):
+def answer_task(s: Flask, user_id: int, project_id: int, task_id: int, answer={"input": "input"}):
     with s.app_context():
         access_token = create_access_token(identity=user_id)
     client = s.test_client()
@@ -35,7 +35,7 @@ def answer_task(s: Flask, user_id: int, project_id: int, task_id: int, answer="a
 
 
 class ProjectControllerTest(unittest.TestCase):
-    projects = ["test_project", "testchoice_project", "testuploadimage_project"]
+    projects = ["test_project"]
 
     def setUp(self):
         data_directory = utils.get_project_root() + '/data/projects'
@@ -48,7 +48,6 @@ class ProjectControllerTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         data_directory = utils.get_project_root() + '/data/projects'
-        projects = ["test_project", "testchoice_project"]
         for p in self.projects:
             test_project_directory = os.path.join(data_directory, p)
             if os.path.exists(test_project_directory):
@@ -237,6 +236,12 @@ class ProjectControllerTest(unittest.TestCase):
         store = TestStore()
         s = Server(store, TestConfig()).flask
 
+        def get_default_answer():
+            return {
+                "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjOBIU/R8ABcACcWipQRAAAAAASUVORK5CYII=",
+                "choice": "1", "input": "input", "input2": "input2"
+            }
+
         def valid():
             p = TestProject()
             store.Project().Create(p)
@@ -245,28 +250,18 @@ class ProjectControllerTest(unittest.TestCase):
             store.Project().Join(p.ID, u.ID)
 
             task_id = get_task(s, u.ID, p.ID)
-            return u, p, task_id
+            return u, p, task_id, None
 
-        def valid_upload_image():
-            p = TestProject(directory="testuploadimage_project")
-            store.Project().Create(p)
-            u = TestUser()
-            store.User().Create(u)
-            store.Project().Join(p.ID, u.ID)
-
-            task_id = get_task(s, u.ID, p.ID)
-            return u, p, task_id
+        def invalid_upload_image():
+            u, p, task_id, _ = valid()
+            answer = get_default_answer()
+            answer["image"] = "image"
+            return u, p, task_id, answer
 
         def valid_change_answer():
-            p = TestProject()
-            store.Project().Create(p)
-            u = TestUser()
-            store.User().Create(u)
-            store.Project().Join(p.ID, u.ID)
-
-            task_id = get_task(s, u.ID, p.ID)
+            u, p, task_id, _ = valid()
             answer_task(s, u.ID, p.ID, task_id)
-            return u, p, task_id
+            return u, p, task_id, None
 
         def project_not_found():
             p = TestProject()
@@ -276,17 +271,14 @@ class ProjectControllerTest(unittest.TestCase):
             store.Project().Join(p.ID, u.ID)
 
             task_id = -1
-            return u, p, task_id
+            return u, p, task_id, None
 
         def answer_option_does_not_exist():
-            p = TestProject(directory="testchoice_project")
-            store.Project().Create(p)
-            u = TestUser()
-            store.User().Create(u)
-            store.Project().Join(p.ID, u.ID)
-
+            u, p, task_id, _ = valid()
+            answer = get_default_answer()
+            answer["choice"] = "choice"
             task_id = get_task(s, u.ID, p.ID)
-            return u, p, task_id
+            return u, p, task_id, answer
 
         def task_not_reserved_for_user():
             p = TestProject()
@@ -296,7 +288,7 @@ class ProjectControllerTest(unittest.TestCase):
             store.Project().Join(p.ID, u.ID)
 
             task_id = 1
-            return u, p, task_id
+            return u, p, task_id, None
 
         def task_not_found():
             p = TestProject()
@@ -306,7 +298,7 @@ class ProjectControllerTest(unittest.TestCase):
             store.Project().Join(p.ID, u.ID)
 
             task_id = 99999
-            return u, p, task_id
+            return u, p, task_id, None
 
         testCases = (
             {
@@ -315,14 +307,8 @@ class ProjectControllerTest(unittest.TestCase):
                 "expectedCode": http.HTTPStatus.OK
             },
             {
-                "name": "valid_upload_image",
-                "payload": valid_upload_image,
-                "answer": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdj8J3r+x8ABKkCN5+zgGgAAAAASUVORK5CYII=",
-                "expectedCode": http.HTTPStatus.OK
-            },
-            {
                 "name": "invalid_upload_image",
-                "payload": valid_upload_image,
+                "payload": invalid_upload_image,
                 # in this case we removed the correct base64 image response and get an error
                 "expectedCode": http.HTTPStatus.FORBIDDEN
             },
@@ -356,15 +342,14 @@ class ProjectControllerTest(unittest.TestCase):
         for val in testCases:
             with self.subTest(val["name"]):
                 client = s.test_client()
-                u, p, task_id = val["payload"]()
-                answer = val["answer"] if "answer" in val else "answer"
+                u, p, task_id, answer = val["payload"]()
+                answer = answer or get_default_answer()
                 answer_extended = "answer_extended"
                 with s.app_context():
                     access_token = create_access_token(identity=u.ID)
                 client.set_cookie('access_token', access_token)
                 response = client.post(f'/projects/task-answer',
-                                       json={"project_id": p.ID, "task_id": task_id, "answer": answer,
-                                             "answer_extended": answer_extended})
+                                       json={"project_id": p.ID, "task_id": task_id, "answer": answer})
                 self.assertEqual(response.status_code, val["expectedCode"])
 
     def test_HandleProjectsJoin(self):

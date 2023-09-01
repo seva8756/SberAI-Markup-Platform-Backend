@@ -21,7 +21,7 @@ class Server:
     logger_instance: logging.Logger
     file_store_instance: FileStore = FileStore()
 
-    def __init__(self, store: Store, config: Config.flask, logger: logging.Logger = logging.basicConfig()):
+    def __init__(self, store: Store, config: Config.flask, logger: logging.Logger = logging.getLogger()):
         app = Flask(__name__)
         app.config.from_object(config)
         JWTManager(app)

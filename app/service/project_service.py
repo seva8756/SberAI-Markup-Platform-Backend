@@ -5,6 +5,7 @@ from pandas import Series
 
 from .. import Server
 from ..controllers import errors
+from ..model.project.project_config_model import ComponentsPurposeTypes, ComponentsContentTypes, ProjectConfig
 from ..model.project.project_model import Project
 from ..store import errors as db_errors
 from ..file_store import errors as file_db_errors
@@ -60,7 +61,7 @@ class ProjectService:
             return None, err
 
         data = ProjectUtils.get_task_data(project, task)
-        return {**answer, **data}, None
+        return {"answer": answer, **data}, None
 
     @staticmethod
     def get_actual_task_in_project(project_id: int, user_id: int) -> (Dict[str, str], Exception):
@@ -90,7 +91,7 @@ class ProjectService:
         return data, None
 
     @staticmethod
-    def set_answer_for_project_task(project_id: int, answer: str, answer_extended: str, task_id: int,
+    def set_answer_for_project_task(project_id: int, answer_list: dict[str, str], task_id: int,
                                     user_id: int) -> Exception:
         is_participant, err = Server.store().Project().isParticipant(project_id, user_id)
         if err is not None:
@@ -107,11 +108,11 @@ class ProjectService:
         if err is not None:
             return err
 
-        answer, err = ProjectUtils.before_answer(project, answer)
+        answer_list, err = ProjectUtils.before_answer(project, answer_list)
         if err is not None:
             return err
 
-        execution_time_seconds, err = Server.file_store().Project().set_answer_task(project, answer, answer_extended,
+        execution_time_seconds, err = Server.file_store().Project().set_answer_task(project, answer_list,
                                                                                     task_id, user_id)
         if err is not None:
             if err == file_db_errors.ErrTaskNotReservedForUser:
@@ -121,8 +122,7 @@ class ProjectService:
             elif err == file_db_errors.ErrPhotoUploadFailed:
                 return errors.errPhotoUploadFailed
             return err
-        err = Server.store().Project().SetAnswer(project_id, task_id, user_id, answer, execution_time_seconds,
-                                                 answer_extended)
+        err = Server.store().Project().SetAnswer(project_id, task_id, user_id, answer_list, execution_time_seconds)
         if err is not None:
             return err
 
@@ -164,12 +164,25 @@ class ProjectUtils:
     def get_task_data(project: Project, task: Series) -> dict[str, str]:
         data = {
             "index": int(task.name),
-            "question": Server.file_store().Project().get_task_question(project, task)
+            "question": Server.file_store().Project().get_task_question(project, task),
+            "components": {}
         }
-        if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT]:
-            data["placeholder"] = Server.file_store().Project().get_task_placeholder(project, task)
-        if project.config.answer_type in [project.config.ANSWER_TYPE_TEXT, project.config.ANSWER_TYPE_CHOICE]:
-            data["images"] = Server.file_store().Project().get_task_images(project, task)
+        for name in project.config.components:
+            result = {}
+
+            comp = project.config.components[name]
+            if ComponentsPurposeTypes.is_purpose_equal(comp,
+                                                       ComponentsPurposeTypes.PURPOSE_CONTENT):  # info block in task
+                if ComponentsContentTypes.is_type_equal(comp, ComponentsContentTypes.CONTENT_IMAGES):
+                    result["images"] = Server.file_store().Project().get_task_images(project, comp["content_fields"],
+                                                                                     task)
+            elif ComponentsPurposeTypes.is_purpose_equal(comp,
+                                                         ComponentsPurposeTypes.PURPOSE_ANSWER):  # answer block in task
+                if ComponentsContentTypes.is_type_equal(comp, ComponentsContentTypes.CONTENT_INPUT):
+                    result["placeholder"] = Server.file_store().Project().get_task_placeholder(
+                        comp["placeholder_field"], task)
+            if result:
+                data["components"][name] = result
         return data
 
     @staticmethod
@@ -186,9 +199,27 @@ class ProjectUtils:
         return data, None
 
     @staticmethod
-    def before_answer(project: Project, answer: str) -> (str, Exception):
-        if project.config.answer_type in [project.config.ANSWER_TYPE_CHOICE]:
-            if answer not in project.config.answer_choice:
-                return None, errors.errAnswerOptionDoesNotExist
+    def before_answer(project: Project, answer: dict[str, str]) -> (str, Exception):
+        cleaning_unnecessary = {}
+        for name in project.config.components:
+            component = project.config.components[name]
+            if name in answer:
+                if ComponentsPurposeTypes.is_purpose_equal(component, ComponentsPurposeTypes.PURPOSE_ANSWER):
+                    cleaning_unnecessary[name] = answer[name]
+        answer = cleaning_unnecessary
+
+        for name in project.config.components:
+            component = project.config.components[name]
+            if ProjectConfig.is_component_require(component):
+                if name not in answer or not answer[name].strip():
+                    return None, errors.errMissingRequiredComponent
+
+        for name in answer:
+            ans = answer[name]
+            component = project.config.components[name]
+            if ComponentsPurposeTypes.is_purpose_equal(component, ComponentsPurposeTypes.PURPOSE_ANSWER):
+                if ComponentsContentTypes.is_type_equal(component, ComponentsContentTypes.CONTENT_CHOICE):
+                    if ans not in component["options"]:
+                        return None, errors.errAnswerOptionDoesNotExist
 
         return answer, None

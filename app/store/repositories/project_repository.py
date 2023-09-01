@@ -31,8 +31,8 @@ class ProjectRepository:
         pass
 
     @abstractmethod
-    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer: str, execution_time: int,
-                  answer_extended: str = "") -> Exception:
+    def SetAnswer(self, project_id: int, task_id: int, user_id: int, answer_list: list[str],
+                  execution_time: int) -> Exception:
         pass
 
     @abstractmethod

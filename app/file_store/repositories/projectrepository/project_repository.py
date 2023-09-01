@@ -8,7 +8,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 from app.file_store import errors
-from app.model.project.project_config_model import ProjectConfig
+from app.model.project.project_config_model import ProjectConfig, ComponentsContentTypes
 from app.model.project.project_model import Project
 from app.utils import utils
 import re
@@ -136,18 +136,17 @@ class TaskManager:
         except KeyError:
             return None, errors.ErrTaskNotFound
 
-    def get_task_answer(self, p: Project, row: Series, answer_column: str, is_extended=False) -> (str, Exception):
+    def get_task_answer(self, p: Project, row: Series, answer_column: str, as_image=False) -> (str, Exception):
         try:
             answer, err = self.answer_exist(row, answer_column)
             if err is not None:
                 return None, err
 
-            if not is_extended:
-                if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
-                    image, err = utils.get_image_in_base64(self.get_answer_image_path(p.directory, answer))
-                    if err is not None:
-                        return None, err
-                    answer = image
+            if as_image:
+                image, err = utils.get_image_in_base64(self.get_answer_image_path(p.directory, answer))
+                if err is not None:
+                    return None, err
+                answer = image
 
             return answer, None
         except KeyError:
@@ -192,23 +191,33 @@ class TagManager:
     def __init__(self):
         self.user_prefix = "user_"
 
-    def get_answer_tag(self, user_id: int):
-        return f"{self.user_prefix}{user_id}"
+    def get_answer_tag(self, user_id: int, component_name: str):
+        return f"{self.user_prefix}{user_id}_{component_name}"
 
-    def get_answer_extended_tag(self, user_id: int):
-        return f"{self.user_prefix}{user_id}_extended"
+    def get_valid_answer_columns(self, user_id: int, columns_name: list[str]):
+        return [name for name in columns_name if self.is_answer_tag(name, user_id)]
 
-    def get_uploaded_image_name(self, task_id: int, user_id: int):
-        return f"task-{task_id}_user-{user_id}.jpg"
+    def get_uploaded_image_name(self, task_id: int, user_id: int, component_name: str):
+        return f"task-{task_id}_user-{user_id}_flag-{component_name}.jpg"
 
     def get_answer_id(self, tag: str):
-        match = re.search(r'\d+', tag)
-        if match:
-            return match.group()
+        user_id = tag.split('_')[1]
+        if user_id:
+            return user_id
         return ""
 
-    def is_answer_tag(self, tag: str):
-        return re.match(r'^user_\d+$', tag) is not None
+    def get_answer_component_name(self, tag: str):
+        name = tag.split('_', 2)[2]
+        if name:
+            return name
+        return ""
+
+    def is_answer_tag(self, tag: str, user_id: int = None):
+        reg = r'^user_%s_\w+$'
+        if user_id is not None:
+            return re.match(reg % user_id, tag) is not None
+        else:
+            return re.match(reg % "\d+", tag) is not None
 
 
 class ProjectFileRepository:
@@ -235,29 +244,34 @@ class ProjectFileRepository:
         return self.task_manager.get_task(p, task_id)
 
     def is_answer_exist(self, task: Series, user_id: int) -> bool:
-        user_prefix_id = self.tag_manager.get_answer_tag(user_id)
-        _, err = self.task_manager.answer_exist(task, user_prefix_id)
-        if err is not None:
-            return False
-        return True
+        columns = self.tag_manager.get_valid_answer_columns(user_id, task.keys().tolist())
+        for col in columns:
+            _, err = self.task_manager.answer_exist(task, col)
+            if err is not None:
+                continue
+            return True
+        return False
 
     def get_task_answer(self, p: Project, task: Series, user_id: int) -> (dict[str, str], Exception):
         answer_data = {}
-        user_prefix_id = self.tag_manager.get_answer_tag(user_id)
-        answer, err = self.task_manager.get_task_answer(p, task, user_prefix_id)
-        if err is not None:
-            return None, err
-        answer_data["answer"] = answer
-
-        user_prefix_extended = self.tag_manager.get_answer_extended_tag(user_id)
-        answer_extended, err = self.task_manager.get_task_answer(p, task, user_prefix_extended, True)
-        if err is None:
-            answer_data["answer_extended"] = answer_extended
+        columns = self.tag_manager.get_valid_answer_columns(user_id, task.keys().tolist())
+        for col in columns:
+            component_name = self.tag_manager.get_answer_component_name(col)
+            if component_name:
+                component = p.config.components[component_name]
+                answer, err = self.task_manager.get_task_answer(p, task, col, ComponentsContentTypes.is_type_equal(
+                    component, ComponentsContentTypes.CONTENT_IMAGE))
+                if err is not None:
+                    if err == errors.ErrAnswerNotFound:
+                        continue
+                    else:
+                        return None, err
+                answer_data[component_name] = answer
+        if not answer_data:
+            return None, errors.ErrAnswerNotFound
         return answer_data, None
 
     def get_sampling_tasks(self, project: Project, user_id: int) -> DataFrame:
-        user_prefix_id = self.tag_manager.get_answer_tag(user_id)
-
         def is_reserved(row):
             return str(user_id) in self.reservation_manager.get_reserved(row)
 
@@ -271,14 +285,16 @@ class ProjectFileRepository:
 
         def count_completed(row):
             reserved = self.reservation_manager.count_reserved(row, user_id)
-            already_completed = sum(
-                not is_answer_empty(row, self.tag_manager.get_answer_id(col)) for col in project.csv.columns
-                if self.tag_manager.is_answer_tag(col))
+
+            # we select the number of answers not by the number of columns, but by user_id
+            answers_id = set(self.tag_manager.get_answer_id(col) for col in project.csv.columns
+                             if self.tag_manager.is_answer_tag(col))
+            already_completed = sum(not is_answer_empty(row, uid) for uid in answers_id)
             return already_completed + reserved
 
         check_callbacks: List[Callable[[DataFrame], bool]] = []
         # user_not_perform
-        if user_prefix_id in project.csv.columns:
+        if len(self.tag_manager.get_valid_answer_columns(user_id, project.csv.columns)) > 0:
             check_callbacks.append(lambda row: is_answer_empty(row, user_id))
 
         # not_max_resolves
@@ -303,33 +319,34 @@ class ProjectFileRepository:
         self.csv_manager.save_csv(p)
         return execution_time_seconds, None
 
-    def set_answer_task(self, p: Project, answer: str, answer_extended: str, task_id: int, user_id: int) -> (
+    def set_answer_task(self, p: Project, answer_list: dict[str, str], task_id: int, user_id: int) -> (
             int, Exception):
         try:
             execution_time_seconds = 0
-            user_prefix_id = self.tag_manager.get_answer_tag(user_id)
 
             task, err = self.task_manager.get_task(p, task_id)
             if err is not None:
                 return None, err
-            _, err = self.task_manager.answer_exist(task, user_prefix_id)
-            if err is not None:
+            a_exist = self.is_answer_exist(task, user_id)
+            if not a_exist:
                 execution_time_seconds, err = self.remove_reserve_task(p, task, user_id)
                 if err is not None:
                     return None, err
 
-            if p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]:
-                image_name = self.tag_manager.get_uploaded_image_name(task_id, user_id)
-                err = utils.save_base64_to_file(answer,
-                                                self.task_manager.get_answer_image_path(p.directory, image_name))
-                if err is not None:
-                    return None, errors.ErrPhotoUploadFailed
-                answer = image_name  # we save in csv not base64, but the path to the image
+            for name_component in answer_list:
+                answer = answer_list[name_component]
+                component = p.config.components[name_component]
 
-            self.task_manager.set_answer_task(p, answer, user_prefix_id, task_id)
-            if (p.config.answer_type in [p.config.ANSWER_TYPE_IMAGE]) or answer_extended != "":
-                self.task_manager.set_answer_task(p, answer_extended, self.tag_manager.get_answer_extended_tag(user_id),
-                                                  task_id)
+                if ComponentsContentTypes.is_type_equal(component, ComponentsContentTypes.CONTENT_IMAGE):
+                    image_name = self.tag_manager.get_uploaded_image_name(task_id, user_id, name_component)
+                    err = utils.save_base64_to_file(answer,
+                                                    self.task_manager.get_answer_image_path(p.directory, image_name))
+                    if err is not None:
+                        return None, errors.ErrPhotoUploadFailed
+                    answer = image_name  # we save in csv not base64, but the path to the image
+
+                answer_tag = self.tag_manager.get_answer_tag(user_id, name_component)
+                self.task_manager.set_answer_task(p, answer, answer_tag, task_id)
 
             self.csv_manager.save_csv(p)
             return execution_time_seconds, None
@@ -337,15 +354,15 @@ class ProjectFileRepository:
             print("Set answer user_id failed:", err)
             return None, err
 
-    def get_task_images(self, p: Project, task: Series) -> list[str]:
-        return self.task_manager.get_images_by_fields_name(p, task, p.config.question_content_fields)
+    def get_task_images(self, p: Project, field_name: list[str], task: Series) -> list[str]:
+        return self.task_manager.get_images_by_fields_name(p, task, field_name)
 
     def get_task_question(self, p: Project, task: Series) -> str:
         value, err = self.task_manager.get_field_value(task, p.config.question_field)
         return value
 
-    def get_task_placeholder(self, p: Project, task: Series) -> str:
-        value, err = self.task_manager.get_field_value(task, p.config.placeholder_field)
+    def get_task_placeholder(self, placeholder_field: str, task: Series) -> str:
+        value, err = self.task_manager.get_field_value(task, placeholder_field)
         return value
 
     def check_reserved(self):

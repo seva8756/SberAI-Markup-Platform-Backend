@@ -1,9 +1,0 @@
-{
-  "title": "Описание изображения",
-  "description": "Рассказываю про очень интересный проект, в котором можно написать текст",
-  "question_field": "question",
-  "answer_type": "text",
-  "repeated_tasks": 99999,
-  "random_sampling": false,
-  "password": "123123"
-}

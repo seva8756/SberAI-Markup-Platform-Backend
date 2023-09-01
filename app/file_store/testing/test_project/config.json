@@ -1,11 +1,60 @@
 {
-  "title": "Интересный проект",
-  "description": "Рассказываю про очень интересный проект",
+  "title": "Описание изображения",
+  "description": "Рассказываю про очень интересный проект, в котором можно написать текст",
+  "instruction": "Вам необходимо описать данные картинки",
   "question_title": "Что изображено на картинке?",
-  "question_content_fields": [
-    "image_name"
-  ],
-  "answer_type": "text",
   "repeated_tasks": 3,
-  "password": "test"
+  "random_sampling": true,
+  "password": "test",
+  "components": {
+    "images": {
+      "position": 1,
+      "name": "Серия изображений",
+      "purpose": "content",
+      "type": "images",
+      "content_fields": [
+        "image_name"
+      ]
+    },
+    "input": {
+      "position": 2,
+      "name": "Опишите изображение",
+      "purpose": "answer",
+      "type": "input",
+      "placeholder_field": "caption",
+      "visuals": {
+        "fill": true
+      },
+      "require": true
+    },
+    "input2": {
+      "position": 2,
+      "name": "Опишите изображение",
+      "purpose": "answer",
+      "type": "input",
+      "placeholder_field": "caption",
+      "visuals": {
+        "fill": true
+      },
+      "require": false
+    },
+    "choice": {
+      "position": 3,
+      "name": "Определите категорию изображения",
+      "purpose": "answer",
+      "type": "choice",
+      "options": {
+        "0": "Не блокируем запрос",
+        "1": "Склонения к самоубийству"
+      },
+      "require": false
+    },
+    "image": {
+      "position": 4,
+      "name": "Загрузите изображение",
+      "purpose": "answer",
+      "type": "image",
+      "require": false
+    }
+  }
 }

@@ -58,13 +58,12 @@ def projects_get_task(project_id: int, task_id: int):
 def projects_answer_task():
     project_id = request.json.get('project_id')
     task_id = request.json.get('task_id')
-    answer = request.json.get('answer')
-    answer_extended = request.json.get('answer_extended') or ""
-    if project_id is None or task_id is None or answer is None:
+    answer_list = request.json.get('answer')
+    if project_id is None or task_id is None or answer_list is None or not isinstance(answer_list, dict):
         return Server.error(http.HTTPStatus.BAD_REQUEST, errors.errInvalidJsonData)
 
     user_id = get_jwt_identity()
-    err = ProjectService.set_answer_for_project_task(project_id, answer, answer_extended, task_id, user_id)
+    err = ProjectService.set_answer_for_project_task(project_id, answer_list, task_id, user_id)
     if err is not None:
         if err in [errors.errNoAccessToTheProject, errors.errProjectNotFound, errors.errAnswerOptionDoesNotExist,
                    errors.errTaskNotReservedForUser, errors.errTaskNotFound, errors.errPhotoUploadFailed]:
