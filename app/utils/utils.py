@@ -52,6 +52,7 @@ class ProjectCode:
 
     @staticmethod
     def decode_id(code):
+        code = code.upper()
         decoded_id = 0
         for char in code[len(ProjectCode.prefix):]:  # Пропускаем первые три символа "PRJ"
             decoded_id = decoded_id * len(ProjectCode.digits) + ProjectCode.digits.index(char) + 1
