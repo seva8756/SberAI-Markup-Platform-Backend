@@ -180,7 +180,7 @@ class ProjectUtils:
                                                          ComponentsPurposeTypes.PURPOSE_ANSWER):  # answer block in task
                 if ComponentsContentTypes.is_type_equal(comp, ComponentsContentTypes.CONTENT_INPUT):
                     result["placeholder"] = Server.file_store().Project().get_task_placeholder(
-                        comp["placeholder_field"], task)
+                        comp["placeholder_field"], task) if "placeholder_field" in comp else ""
             if result:
                 data["components"][name] = result
         return data
