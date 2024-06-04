@@ -28,7 +28,7 @@ For the frontend repository, visit
     - **Database**: Fill in the details for your main database.
     - **TestDatabase**: Fill in the details for your test database.
     - **Alembic**: Specify the database you want to apply migrations to (name should match one of the above configurations).
-    - **JWT_SECRET_KEY**: Set a secret key for JWT (you can use the following key):
+    - **JWT_SECRET_KEY**: Set a secret key for JWT (for example you can use the following key):
         ```
         82d1df42arc7c08a55127f0061621be1c2d9a81e77a7f4d56fcn76d38075b60061621be1c2d9a81e77a7f
         ```
